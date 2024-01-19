@@ -3328,6 +3328,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testSimpleReference() throws Exception {
             runTest("testData/newJ2k/isOperator/simpleReference.java");
         }
+
+        @TestMetadata("InstanceOfErasedArrayType.java")
+        public void testInstanceOfErasedArrayType() throws Exception {
+            runTest("testData/newJ2k/isOperator/InstanceOfErasedArrayType.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -5107,11 +5112,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("AnonymousObject.java")
         public void testAnonymousObject() throws Exception {
             runTest("testData/newJ2k/postProcessing/AnonymousObject.java");
-        }
-
-        @TestMetadata("CheckForInstanceOfErasedArrayType.java")
-        public void testCheckForInstanceOfErasedArrayType() throws Exception {
-            runTest("testData/newJ2k/postProcessing/CheckForInstanceOfErasedArrayType.java");
         }
 
         @TestMetadata("ConvertConcatenationToRawString.java")

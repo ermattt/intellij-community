@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
+import com.intellij.codeInspection.dataFlow.TypeConstraints.TypeConstraintFactory
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
-import com.intellij.psi.JavaTokenType.SUPER_KEYWORD
-import com.intellij.psi.JavaTokenType.THIS_KEYWORD
+import com.intellij.psi.JavaTokenType.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ChildRole
