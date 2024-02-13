@@ -204,6 +204,7 @@ private class SymbolProviderVisitor(private val symbolProvider: JKSymbolProvider
 
     override fun visitField(field: PsiField) {
         symbolProvider.provideUniverseSymbol(field)
+        field.acceptChildren(this)
     }
 
     override fun visitParameter(parameter: PsiParameter) {
