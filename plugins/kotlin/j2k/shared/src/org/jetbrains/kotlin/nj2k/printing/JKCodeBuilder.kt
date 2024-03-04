@@ -74,6 +74,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
+        /** We should never hit this */
         override fun visitTreeElementRaw(treeElement: JKElement) {
             printer.print("/* !!! Hit visitElement for element type: ${treeElement::class} !!! */")
         }
