@@ -441,6 +441,9 @@ class JavaToJKTreeBuilder(
 
         private fun PsiMethodReferenceExpression.methodReferenceQualifier(): JKExpression {
             val qualifierType = qualifierType
+            if (qualifierType != null) {
+                println("PsiMethodReferenceExpression.methodReferenceQualifier, '${this.text}' ($this), qualifierType.type = ${qualifierType.type.canonicalText}, parent = '${this.parent.text}'")
+            }
             if (qualifierType != null) return JKTypeQualifierExpression(typeFactory.fromPsiType(qualifierType.type))
 
             return qualifierExpression?.toJK() ?: JKStubExpression()
@@ -466,6 +469,9 @@ class JavaToJKTreeBuilder(
             }
 
             val symbol = symbolProvider.provideSymbolForReference<JKSymbol>(this)
+            if (symbol is JKTypeParameterSymbol) {
+                println("PsiReferenceExpression.toJK, '${this.text}' ($this), symbol.name = ${symbol.name}, parent = '${this.parent.text}'")
+            }
             return when (symbol) {
                 is JKClassSymbol -> JKClassAccessExpression(symbol)
                 is JKFieldSymbol -> JKFieldAccessExpression(symbol)

@@ -11,10 +11,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
-import org.jetbrains.kotlin.nj2k.types.JKContextType
-import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
-import org.jetbrains.kotlin.nj2k.types.isInterface
-import org.jetbrains.kotlin.nj2k.types.isUnit
+import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
@@ -181,10 +178,13 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitMethodAccessExpression(methodAccessExpression: JKMethodAccessExpression) {
+            println("visitMethodAccessExpression, ${methodAccessExpression.identifier.name}")
+            error("visitMethodAccessExpression, ${methodAccessExpression.identifier.name}")
             printer.renderSymbol(methodAccessExpression.identifier, methodAccessExpression)
         }
 
         override fun visitTypeQualifierExpression(typeQualifierExpression: JKTypeQualifierExpression) {
+            error("visitTypeQualifierExpression, ${typeQualifierExpression.type.fqName}")
             printer.renderType(typeQualifierExpression.type, typeQualifierExpression)
         }
 

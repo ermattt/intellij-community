@@ -8,10 +8,7 @@ import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiSwitchExpression
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
-import org.jetbrains.kotlin.nj2k.types.JKContextType
-import org.jetbrains.kotlin.nj2k.types.JKNoType
-import org.jetbrains.kotlin.nj2k.types.JKType
-import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
+import org.jetbrains.kotlin.nj2k.types.*
 
 abstract class JKExpression : JKAnnotationMemberValue(), PsiOwner by PsiOwnerImpl() {
     protected abstract val expressionType: JKType?
@@ -240,10 +237,17 @@ class JKClassAccessExpression(
 }
 
 class JKMethodAccessExpression(val identifier: JKMethodSymbol, override val expressionType: JKType? = null) : JKExpression() {
+    init {
+        error("JKMethodAccessExpression")
+    }
     override fun accept(visitor: JKVisitor) = visitor.visitMethodAccessExpression(this)
 }
 
 class JKTypeQualifierExpression(val type: JKType, override val expressionType: JKType? = null) : JKExpression() {
+
+    init {
+        println("JKTypeQualifierExpression, ${type.fqName} ${type.toString()}")
+    }
     override fun accept(visitor: JKVisitor) = visitor.visitTypeQualifierExpression(this)
 }
 
