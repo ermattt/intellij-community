@@ -184,8 +184,9 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitTypeQualifierExpression(typeQualifierExpression: JKTypeQualifierExpression) {
-            error("visitTypeQualifierExpression, ${typeQualifierExpression.type.fqName}")
+            printLeftNonCodeElements(typeQualifierExpression)
             printer.renderType(typeQualifierExpression.type, typeQualifierExpression)
+            printRightNonCodeElements(typeQualifierExpression)
         }
 
         override fun visitFile(file: JKFile) {

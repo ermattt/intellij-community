@@ -1,7 +1,7 @@
 // IGNORE_K2
-//statement
-class Foo {
-    List<T, K, M> l;
+
+class Foo<T, K, M> {
+    Map<T, Map<K, M>> l;
     Outer.Inner</* during */Outer.Inner<String>> outerInner;
 }
 
