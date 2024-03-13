@@ -117,7 +117,7 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     LiftAssignmentInspectionBasedProcessing(),
     MayBeConstantInspectionBasedProcessing(),
     RemoveForExpressionLoopParameterTypeProcessing(),
-    inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
+    //inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
     intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
     intentionBasedProcessing(IndentRawStringIntention()),
     intentionBasedProcessing(JoinDeclarationAndAssignmentIntention()),

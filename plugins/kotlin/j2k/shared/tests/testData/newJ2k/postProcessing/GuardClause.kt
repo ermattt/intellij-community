@@ -1,5 +1,5 @@
 class Test {
-    fun testRequire(s1: String?, b1: Boolean, b2: Boolean) {
+    fun testRequire(s1: String, b1: Boolean, b2: Boolean) {
         requireNotNull(s1) { "s should not be null" }
 
         require(b1)
