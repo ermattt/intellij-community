@@ -14,7 +14,11 @@ class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveConver
         if (element is JKModalityOwner && element is JKAnnotationListOwner) {
             val overrideAnnotation = element.annotationList.annotationByFqName("java.lang.Override")
             if (overrideAnnotation != null) {
+                println("\nJavaModifiersConversion, remove @Override for element '${element.psi?.text}' ($element)")
+                println("  element.modalityElement.modifier.text = ${element.modalityElement.modifier.text}")
+                element.modalityElement.modality
                 element.annotationList.annotations -= overrideAnnotation
+
             }
         }
 

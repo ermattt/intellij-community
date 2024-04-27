@@ -45,8 +45,12 @@ class ModalityConversion(context: NewJ2kConverterContext) : RecursiveConversion(
 
             modality != ABSTRACT && psiMethod.findSuperMethods().isNotEmpty() -> {
                 modality = FINAL
-                if (!hasOtherModifier(OtherModifier.OVERRIDE)) {
+                val hasOverrideModifier = hasOtherModifier(OtherModifier.OVERRIDE)
+                if (!hasOverrideModifier) {
+                    println("\n====== ModalityConversion, override modifier not present, being added for '${psiMethod.text}' (${this.name.value})")
                     otherModifierElements += JKOtherModifierElement(OtherModifier.OVERRIDE)
+                } else {
+                    println("\nModalityConversion, override modifier present for '${psiMethod.text}' (${this.name.value})")
                 }
             }
 

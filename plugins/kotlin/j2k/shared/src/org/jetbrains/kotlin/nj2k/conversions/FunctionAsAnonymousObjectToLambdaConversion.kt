@@ -21,6 +21,7 @@ class FunctionAsAnonymousObjectToLambdaConversion(context: NewJ2kConverterContex
                 ?.safeAs<JKMethod>()
                 ?.takeIf { it.name.value == "invoke" }
                 ?: return recurse(element)
+            println("FunctionAsAnonymousObjectToLambdaConversion, ${element.classSymbol}")
             return recurse(
                 JKLambdaExpression(
                     JKBlockStatement(invokeFunction::block.detached()),

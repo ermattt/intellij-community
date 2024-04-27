@@ -540,11 +540,18 @@ class JavaToJKTreeBuilder(
                                 ?.let { typeParameters ->
                                     JKTypeArgumentList(typeParameters.map { JKTypeElement(it.toJK()) })
                                 } ?: JKTypeArgumentList()
+                    println("JavaToJKTreeBuilder, creating JKNewExpression for ${classSymbol}")
                     JKNewExpression(
                         classSymbol,
                         argumentList?.toJK() ?: JKArgumentList(),
                         typeArgumentList,
-                        with(declarationMapper) { anonymousClass?.createClassBody() } ?: JKClassBody(),
+                        with(declarationMapper) {
+                            val body = anonymousClass?.createClassBody()
+                            println("  body = $body, num declarations = ${body?.declarations?.first()}")
+                            println("  ${body?.declarations?.first()?.safeAs<JKMethodImpl>()?.identifier?.name}")
+                            println(body?.declarations?.filterIsInstance<JKMethodImpl>()?.joinToString { m -> "${m.identifier} " + m.annotationList.annotations.joinToString { it.classSymbol.name } })
+                            body
+                        } ?: JKClassBody(),
                         anonymousClass != null
                     ).also {
                         it.psi = this
