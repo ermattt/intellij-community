@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.nj2k.tree
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKNoType
+import java.util.*
+import kotlin.collections.ArrayList
 
 abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
     abstract val name: JKNameIdentifier
