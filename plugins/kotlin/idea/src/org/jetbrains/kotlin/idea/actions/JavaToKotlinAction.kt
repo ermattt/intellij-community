@@ -14,6 +14,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -25,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.PsiDirectoryFactory
@@ -49,6 +51,7 @@ import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
+import org.jetbrains.kotlin.nj2k.PreprocessorExtensionsRunner.runRegisteredPreprocessors
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
@@ -72,6 +75,7 @@ class JavaToKotlinAction : AnAction() {
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
 
+
             fun convertWithStatistics() {
                 val j2kKind = getJ2kKind(forceUsingOldJ2k)
                 val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
@@ -89,6 +93,7 @@ class JavaToKotlinAction : AnAction() {
                 J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
+            if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return emptyList()
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
 
             val result = converterResult ?: return emptyList()
