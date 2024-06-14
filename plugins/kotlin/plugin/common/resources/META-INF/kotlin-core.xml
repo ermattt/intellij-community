@@ -12,7 +12,7 @@
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
-            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier" 
+            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectConfigurator"
@@ -319,6 +319,9 @@
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
     <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
+
+    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.FooPreprocessorExtension"/>
+    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.BarPreprocessorExtension"/>
   </extensions>
 
   <!-- Line markers -->
