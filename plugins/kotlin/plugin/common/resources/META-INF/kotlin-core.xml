@@ -12,7 +12,7 @@
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
-            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier" 
+            interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"
             dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.projectConfigurator"
@@ -94,7 +94,7 @@
 
     <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
-    
+
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
@@ -130,7 +130,7 @@
             parentId="project.propCompiler"/>
 
     <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
-    
+
     <typeHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
@@ -329,6 +329,9 @@
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
     <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
+
+    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.FooPreprocessorExtension"/>
+    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.BarPreprocessorExtension"/>
   </extensions>
 
   <!-- Line markers -->

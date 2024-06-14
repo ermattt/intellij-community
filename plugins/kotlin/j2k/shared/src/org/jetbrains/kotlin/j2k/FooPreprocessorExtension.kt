@@ -1,0 +1,33 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.j2k
+
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.impl.PsiImplUtil.setName
+import org.jetbrains.kotlin.nj2k.Conversion
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+
+class FooPreprocessorExtension : J2kPreprocessorExtension {
+
+    override fun processFile(
+        project: Project,
+        files: List<PsiJavaFile>,
+    ) {
+        println("\n\n======= FooPreprocessorExtension")
+        for (file in files) {
+            println("  ${file.name}")
+            val outermostClass = file.classes.firstOrNull() ?: continue
+            val firstNamedParameter = outermostClass.findDescendantOfType<PsiParameter> { it.nameIdentifier != null } ?: continue
+            println("  Found class ${outermostClass.name} with a parameter named ${firstNamedParameter.name}")
+
+            setName(checkNotNull(firstNamedParameter.nameIdentifier), "foo")
+        }
+    }
+}
