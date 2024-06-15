@@ -29,7 +29,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
     diagnosticBasedProcessing(MissingIteratorExclExclFixFactory, Errors.ITERATOR_ON_NULLABLE),
     diagnosticBasedProcessing(SmartCastImpossibleExclExclFixFactory, Errors.SMARTCAST_IMPOSSIBLE),
     diagnosticBasedProcessing(ReturnTypeMismatchOnOverrideFactory, Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE),
-    diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
+    //diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
     invisibleMemberDiagnosticBasedProcessing(MakeVisibleFactory, Errors.INVISIBLE_MEMBER),
 
     diagnosticBasedProcessing(
@@ -164,9 +164,9 @@ private val optimizingImportsAndFormattingCodePostProcessingGroup = NamedPostPro
 )
 
 internal val allProcessings: List<NamedPostProcessingGroup> = listOf(
-    inferringTypesPostProcessingGroup,
+    /*inferringTypesPostProcessingGroup,
     cleaningUpCodePostProcessingGroup,
-    optimizingImportsAndFormattingCodePostProcessingGroup
+    optimizingImportsAndFormattingCodePostProcessingGroup*/
 )
 
 private fun shouldConvertToRawString(element: KtBinaryExpression): Boolean {

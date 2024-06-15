@@ -102,8 +102,10 @@ internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostP
             classes.map { klass -> klass to collector.collectPropertiesData(klass) }
         }.ifEmpty { return }
 
+        println("\nConvertGettersAndSettersToPropertyProcessing")
         for ((klass, propertiesData) in classesWithPropertiesData) {
             val propertiesWithAccessors = runReadAction { filter.filter(klass, propertiesData) }
+            println("klass = ${klass.name}")
 
             allowAnalysisOnEdt {
                 runReadAction {
@@ -538,6 +540,7 @@ private class ClassConverter(
 
     private fun convert(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
+        println("  property = ${property.name}, ${property}")
 
         // convenience variables
         val realGetter = getter as? RealGetter
@@ -562,6 +565,9 @@ private class ClassConverter(
         }
 
         val ktProperty = getKtProperty()
+        println("  ktProperty = '${ktProperty.text}'")
+        println("  getter.modifiersText = '${getter.modifiersText}'")
+        println("  realGetter?.function?.modifierList = ${realGetter?.function?.modifierList?.text}")
         val ktGetter = addGetter(getter, ktProperty, property.isFake)
         val ktSetter = setter?.let { addSetter(it, ktProperty, property.isFake) }
         val isOpen = realGetter?.function?.hasModifier(OPEN_KEYWORD) == true || realSetter?.function?.hasModifier(OPEN_KEYWORD) == true
@@ -569,6 +575,9 @@ private class ClassConverter(
         val getterVisibility = realGetter?.function?.visibilityModifierTypeOrDefault()
         if (getterVisibility != null) {
             ktProperty.setVisibility(getterVisibility)
+        }
+        if (realGetter?.function?.modifierList?.hasModifier(OVERRIDE_KEYWORD) == true) {
+            ktProperty.addModifier(OVERRIDE_KEYWORD)
         }
 
         fun removeRealAccessors() {
