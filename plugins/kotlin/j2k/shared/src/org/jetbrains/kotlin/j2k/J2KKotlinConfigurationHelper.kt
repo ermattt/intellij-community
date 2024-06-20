@@ -16,14 +16,12 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
-import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
-import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 internal object J2KKotlinConfigurationHelper {
     fun checkKotlinIsConfigured(module: Module): Boolean {
-        return module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
+        return true //module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
     }
 
     fun setUpAndConvert(
