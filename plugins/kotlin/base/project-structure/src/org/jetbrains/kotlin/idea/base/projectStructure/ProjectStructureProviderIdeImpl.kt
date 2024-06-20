@@ -237,9 +237,11 @@ private inline fun forEachModuleFactory(action: KaModuleFactory.() -> Unit) {
 }
 
 private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KaModule {
+    println("In ProjectStructureProviderIdeImpl::createKtModuleByModuleInfo")
     forEachModuleFactory {
         createModule(moduleInfo)?.let { return it }
     }
+    println("  passed forEachModuleFactory, moduleInfo = $moduleInfo")
 
     return when (moduleInfo) {
         is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)

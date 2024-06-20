@@ -54,6 +54,7 @@ class NewJavaToKotlinConverter(
     ): FilesResult {
         ThreadingAssertions.assertBackgroundThread()
 
+        println("In NewJavaToKotlinConverter.filesToKotlin")
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
 
         // TODO looks like the progress dialog doesn't appear immediately, but should
@@ -62,8 +63,10 @@ class NewJavaToKotlinConverter(
         PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
 
         val (results, externalCodeProcessing, context) = runReadAction {
+            println("  about to run elementsToKotlin")
             elementsToKotlin(files, withProgressProcessor, bodyFilter)
         }
+        println("  done running elementsToKotlin")
 
         val kotlinFiles = results.mapIndexed { i, result ->
             val javaFile = files[i]
@@ -89,27 +92,28 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
+        println("in elementsToKotlin 6.25.2.46")
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
+        println("  contextElement = $contextElement")
+        println("  targetModule = ${targetModule?.name}")
+        println("  targetFile = ${targetFile?.name}")
+        val productionModuleInfo = targetModule?.productionOrTestSourceModuleInfo
+        println("  productionModuleInfo = ${productionModuleInfo?.name?.identifier} ($productionModuleInfo)")
+        val targetKaModule = productionModuleInfo?.toKaModule()
+        println("  targetKaModule = $targetKaModule")
 
-        // TODO
-        // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
-        // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
+        return allowAnalysisOnEdt {
+            // TODO
+            // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
+            // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
 
         return when {
             targetKaModule != null -> {
                 analyze(targetKaModule) {
+                    println("  about to call doConvertElementsToKotlin")
                     doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
                 }
             }
-
-            targetFile != null -> {
-                analyze(targetFile) {
-                    doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
-                }
-            }
-
-            else -> Result.EMPTY
         }
     }
 
