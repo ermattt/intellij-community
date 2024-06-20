@@ -48,5 +48,6 @@ abstract class J2kConverterExtension {
         val EP_NAME = ExtensionPointName<J2kConverterExtension>("org.jetbrains.kotlin.j2kConverterExtension")
 
         fun extension(kind: Kind): J2kConverterExtension = EP_NAME.extensionList.first { it.kind == kind }
+        fun extension(useNewJ2k: Boolean): J2kConverterExtension = EP_NAME.extensionList.first { it.kind == Kind.K1_NEW }
     }
 }
