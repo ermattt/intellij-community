@@ -93,7 +93,9 @@ class JavaToKotlinAction : AnAction() {
                 J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
-            if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return emptyList()
+            //if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return emptyList()
+            println("Run as global transparent command")
+            runRegisteredPreprocessors(project, javaFiles)
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
 
             val result = converterResult ?: return emptyList()
@@ -114,7 +116,7 @@ class JavaToKotlinAction : AnAction() {
             //
             // "Global" means that you can undo it from any changed file: the converted files,
             // or the external files that were updated.
-            project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
+            project.executeCommand(KotlinBundle.message("action.j2k.task.name"), groupId = KotlinBundle.message("action.j2k.task.name")) {
                 newFiles = project.runUndoTransparentGlobalWriteAction {
                     saveResults(javaFiles, result.results)
                         .map { it.toPsiFile(project) as KtFile }
