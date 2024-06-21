@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -26,15 +28,24 @@ object PreprocessorExtensionsRunner {
             ProgressManager.checkCanceled()
             ProgressManager.progress("Custom Preprocessing", "Running preprocessor $i/$preprocessorsCount")
             try {
-                runUndoTransparentActionInEdt(inWriteAction = true) {
-                    preprocessor.processFile(project, javaFiles)
-                    javaFiles.forEach { it.commitAndUnblockDocument() }
+                ApplicationManager.getApplication().invokeAndWait {
+                    CommandProcessor.getInstance().runUndoTransparentAction {
+                        preprocessor.processFile(project, javaFiles)
+                        ApplicationManager.getApplication().runWriteAction {
+
+                            javaFiles.forEach { it.commitAndUnblockDocument() }
+                        }
+                    }
                 }
             } catch (e: ProcessCanceledException) {
                 throw e
             } catch (t: Throwable) {
-                runUndoTransparentActionInEdt(inWriteAction = true) {
-                    javaFiles.forEach { it.commitAndUnblockDocument() }
+                ApplicationManager.getApplication().invokeAndWait {
+                    CommandProcessor.getInstance().runUndoTransparentAction {
+                        ApplicationManager.getApplication().runWriteAction {
+                            javaFiles.forEach { it.commitAndUnblockDocument() }
+                        }
+                    }
                 }
             }
         }
