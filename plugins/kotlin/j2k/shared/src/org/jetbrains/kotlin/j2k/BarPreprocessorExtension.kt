@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,17 +27,14 @@ class BarPreprocessorExtension : J2kPreprocessorExtension {
         println("\n\n======= BarPreprocessorExtension")
         for (file in files) {
             println("  ${file.name}")
-            val outermostClass = file.classes.firstOrNull() ?: continue
-            val firstNamedParameter = outermostClass.findDescendantOfType<PsiParameter> { it.nameIdentifier != null && it.name != "foo" } ?: continue
-            println("  Found class ${outermostClass.name} with a parameter named ${firstNamedParameter.name}")
+            val firstNamedParameter = runReadAction {
+                file.classes.firstOrNull()?.findDescendantOfType<PsiParameter> { it.nameIdentifier != null && it.name != "foo" }
+            } ?: continue
+            println("  Found firstNamedParameter ${firstNamedParameter.name}")
 
-            setName(checkNotNull(firstNamedParameter.nameIdentifier), "bar")
-            val firstMethod = runReadAction { outermostClass.findDescendantOfType<PsiMethod>() } ?: continue
-            //println("  Found method ${firstMethod.name}")
-            //firstMethod.delete()
-            /*runUndoTransparentActionInEdt(inWriteAction = true) {
-                firstMethod.delete()
-            }*/
+            runWriteAction {
+                setName(checkNotNull(firstNamedParameter.nameIdentifier), "bar")
+            }
         }
     }
 }
