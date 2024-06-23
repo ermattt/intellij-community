@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 
 object PreprocessorExtensionsRunner {
@@ -28,13 +29,9 @@ object PreprocessorExtensionsRunner {
             ProgressManager.checkCanceled()
             ProgressManager.progress("Custom Preprocessing", "Running preprocessor $i/$preprocessorsCount")
             try {
-                ApplicationManager.getApplication().invokeAndWait {
+                project.executeCommand("Java to Kotlin Preprocessing", groupId = "j2k") {
                     CommandProcessor.getInstance().runUndoTransparentAction {
                         preprocessor.processFile(project, javaFiles)
-                        ApplicationManager.getApplication().runWriteAction {
-
-                            javaFiles.forEach { it.commitAndUnblockDocument() }
-                        }
                     }
                 }
             } catch (e: ProcessCanceledException) {
