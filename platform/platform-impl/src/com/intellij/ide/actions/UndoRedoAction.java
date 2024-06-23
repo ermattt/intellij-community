@@ -150,6 +150,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
     @Override
     public void undo(@Nullable FileEditor editor) {
+      System.out.println("In UndoManagerAction::undo");
        mySwingUndoManager.undo();
     }
 

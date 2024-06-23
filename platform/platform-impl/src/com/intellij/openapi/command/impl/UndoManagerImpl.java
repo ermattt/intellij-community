@@ -452,6 +452,7 @@ public final class UndoManagerImpl extends UndoManager {
 
   @Override
   public void undo(@Nullable FileEditor editor) {
+    System.out.println("In UndoManagerImpl::undo");
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     LOG.assertTrue(isUndoAvailable(editor));
     undoOrRedo(editor, true);
@@ -514,6 +515,7 @@ public final class UndoManagerImpl extends UndoManager {
   }
 
   private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
+    System.out.println("In UndoManagerImpl::undoOrRedo");
     ClientState state = getClientState(editor);
     if (state == null) {
       return;

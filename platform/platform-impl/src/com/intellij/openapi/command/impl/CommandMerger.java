@@ -55,6 +55,7 @@ public final class CommandMerger {
   }
 
   void addAction(@NotNull UndoableAction action) {
+    System.out.println("CommandMerger::addAction");
     myCurrentActions.add(action);
     addActionToSharedStack(action);
     DocumentReference[] refs = action.getAffectedDocuments();
@@ -65,6 +66,7 @@ public final class CommandMerger {
   }
 
   private void addActionToSharedStack(@NotNull UndoableAction action) {
+    System.out.println("CommandMerger::addActionToSharedStack");
     if (action instanceof AdjustableUndoableAction adjustable) {
       DocumentReference[] affected = action.getAffectedDocuments();
       if (affected == null) {
@@ -85,17 +87,21 @@ public final class CommandMerger {
 
   void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
+    System.out.println("In CommandMerger::commandFinished");
     if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
       clearRedoStacks(nextCommandToMerge);
     }
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
+      System.out.println("  Not merging group " + groupId + " nextCommand " + nextCommandToMerge.myCommandName);
       flushCurrentCommand();
       myManager.compact(myState);
     }
+    System.out.println("  Merging group " + groupId + " nextCommand " + nextCommandToMerge.myCommandName);
     merge(nextCommandToMerge);
 
     if (nextCommandToMerge.isTransparent() || !hasActions()) return;
+    System.out.println("  Made it past line `if (nextCommandToMerge.isTransparent() || !hasActions()) return;`");
 
     if (groupId != SoftReference.dereference(myLastGroupId)) {
       myLastGroupId = groupId == null ? null : new WeakReference<>(groupId);
@@ -104,13 +110,25 @@ public final class CommandMerger {
   }
 
   private boolean shouldMerge(Object groupId, @NotNull CommandMerger nextCommandToMerge) {
-    if (nextCommandToMerge.isTransparent() && nextCommandToMerge.myStateAfter == null && myStateAfter != null) return false;
-    if (isTransparent() && myStateBefore == null && nextCommandToMerge.myStateBefore != null) return false;
+    System.out.println("CommandMerger::shouldMerge");
+    if (nextCommandToMerge.isTransparent() && nextCommandToMerge.myStateAfter == null && myStateAfter != null) {
+      System.out.println("  False");
+      return false;
+    }
+    if (isTransparent() && myStateBefore == null && nextCommandToMerge.myStateBefore != null) {
+      System.out.println("  False");
+      return false;
+    }
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
-      return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
+      boolean r = !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
+      System.out.println("  " + r);
+      return r;
     }
 
-    if ((myForcedGlobal || nextCommandToMerge.myForcedGlobal) && !isMergeGlobalCommandsAllowed()) return false;
+    if ((myForcedGlobal || nextCommandToMerge.myForcedGlobal) && !isMergeGlobalCommandsAllowed()) {
+      System.out.println("  False");
+      return false;
+    }
     return canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
   }
 
@@ -193,10 +211,13 @@ public final class CommandMerger {
   }
 
   public static boolean canMergeGroup(Object groupId, Object lastGroupId) {
-    return groupId != null && Comparing.equal(lastGroupId, groupId);
+    boolean r = groupId != null && Comparing.equal(lastGroupId, groupId);
+    System.out.println("CommandMerger::canMergeGroup, groupId = " + groupId + ", lastGroupId = " + lastGroupId + ", result = " + r);
+    return r;
   }
 
   private void merge(@NotNull CommandMerger nextCommandToMerge) {
+    System.out.println("CommandMerger::merge");
     setBeforeState(nextCommandToMerge.myStateBefore);
     myStateAfter = nextCommandToMerge.myStateAfter;
     if (myTransparent) { // todo write test
@@ -347,6 +368,7 @@ public final class CommandMerger {
   }
 
   void undoOrRedo(FileEditor editor, boolean isUndo) {
+    System.out.println("In CommandMerger::undoOrRedo");
     flushCurrentCommand();
 
     // here we _undo_ (regardless 'isUndo' flag) and drop all 'transparent' actions made right after undoRedo/redo.
