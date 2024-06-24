@@ -93,7 +93,7 @@ class JavaToKotlinAction : AnAction() {
                 J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
-            if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return emptyList()
+            runRegisteredPreprocessors(project, javaFiles)
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
 
             val result = converterResult ?: return emptyList()
