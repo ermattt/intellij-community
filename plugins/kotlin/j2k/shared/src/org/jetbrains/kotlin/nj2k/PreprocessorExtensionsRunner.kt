@@ -28,13 +28,13 @@ object PreprocessorExtensionsRunner {
             ProgressManager.checkCanceled()
             ProgressManager.progress("Custom Preprocessing", "Running preprocessor $i/$preprocessorsCount")
             try {
-                ApplicationManager.getApplication().invokeAndWait {
-                    CommandProcessor.getInstance().runUndoTransparentAction {
-                        preprocessor.processFile(project, javaFiles)
-                        ApplicationManager.getApplication().runWriteAction {
+                CommandProcessor.getInstance().withUndoTransparentAction().use {
+                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+                    //CommandProcessor.getInstance().allowMergeGlobalCommands()
+                    preprocessor.processFile(project, javaFiles)
+                    ApplicationManager.getApplication().runWriteAction {
 
-                            javaFiles.forEach { it.commitAndUnblockDocument() }
-                        }
+                        javaFiles.forEach { it.commitAndUnblockDocument() }
                     }
                 }
             } catch (e: ProcessCanceledException) {
