@@ -72,6 +72,7 @@ class JavaToKotlinAction : AnAction() {
             forceUsingOldJ2k: Boolean = false,
             settings: ConverterSettings = defaultSettings
         ): List<KtFile> {
+            println("\n\n========== Start of JavaToKotlinAction::convertFiles")
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
 
@@ -93,7 +94,9 @@ class JavaToKotlinAction : AnAction() {
                 J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
-            if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return emptyList()
+            //if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return emptyList()
+            runRegisteredPreprocessors(project, javaFiles)
+            println("Done running preprocessors")
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
 
             val result = converterResult ?: return emptyList()
@@ -114,7 +117,7 @@ class JavaToKotlinAction : AnAction() {
             //
             // "Global" means that you can undo it from any changed file: the converted files,
             // or the external files that were updated.
-            project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
+            project.executeCommand(KotlinBundle.message("action.j2k.task.name"), groupId = "j2k") {
                 newFiles = project.runUndoTransparentGlobalWriteAction {
                     saveResults(javaFiles, result.results)
                         .map { it.toPsiFile(project) as KtFile }
@@ -137,6 +140,7 @@ class JavaToKotlinAction : AnAction() {
                 }
             }
 
+            println("\n========== End of JavaToKotlinAction::convertFiles\n")
             return newFiles
         }
 
