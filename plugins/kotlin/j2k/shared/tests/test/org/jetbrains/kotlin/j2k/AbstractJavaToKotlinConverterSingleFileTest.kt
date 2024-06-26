@@ -8,8 +8,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiParameter
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.impl.PsiImplUtil.setName
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -17,16 +19,14 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.File
 import java.util.regex.Pattern
-import com.intellij.psi.impl.PsiImplUtil.setName
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.idea.util.application.executeCommand
 
 private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method)\n")
 
@@ -157,13 +157,19 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             "file" -> fileToKotlin(
                 javaCode,
                 settings,
-                if (directives.contains("INCLUDE_J2K_PREPROCESSOR_EXTENSIONS")) listOf(dummyPreprocessorEP) else emptyList()
+                preprocessorExtensions = if (directives.contains("INCLUDE_J2K_PREPROCESSOR_EXTENSIONS")) listOf(dummyPreprocessorEP) else emptyList(),
+                postprocessorExtensions = if (directives.contains("INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS")) listOf(dummyPostprocesorEP) else emptyList()
             )
 
             else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
 
-    open fun fileToKotlin(text: String, settings: ConverterSettings, preprocessorExtensions: List<J2kPreprocessorExtension>): String {
+    open fun fileToKotlin(
+        text: String,
+        settings: ConverterSettings,
+        preprocessorExtensions: List<J2kPreprocessorExtension>,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
+    ): String {
         val file = createJavaFile(text)
         val j2kKind = if (isFirPlugin) K2 else K1_NEW
         val extension = J2kConverterExtension.extension(j2kKind)
@@ -173,15 +179,21 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         project.executeCommand("J2K") {
             ProgressManager.getInstance()
                 .runProcessWithProgressSynchronously({
-                    converterResult =
-                        converter.filesToKotlin(listOf(file), postProcessor, preprocessorExtensions = preprocessorExtensions)
+                                                         converterResult =
+                                                             converter.filesToKotlin(
+                                                                 listOf(file),
+                                                                 postProcessor,
+                                                                 preprocessorExtensions = preprocessorExtensions,
+                                                                 postprocessorExtensions = postprocessorExtensions
+                                                             )
                                                      }, "Testing J2K", /* canBeCanceled = */ true, project)
         }
         return checkNotNull(converterResult).results.single()
     }
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
-        val result = fileToKotlin("final class C {$text}", settings, preprocessorExtensions = emptyList())
+        val result =
+            fileToKotlin("final class C {$text}", settings, preprocessorExtensions = emptyList(), postprocessorExtensions = emptyList())
         return result
             .substringBeforeLast("}")
             .replace("internal class C {", "\n")
@@ -221,11 +233,36 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         ) {
             for (file in files) {
                 val method = readAction {
-                    file.classes.firstOrNull()?.findDescendantOfType<PsiMethod> { it.name != "main" && !it.isConstructor && !it.name.startsWith("get") && !it.name.startsWith("set") }
+                    file.classes.firstOrNull()?.findDescendantOfType<PsiMethod> {
+                        it.name != "main" && !it.isConstructor && !it.name.startsWith("get") && !it.name.startsWith("set")
+                    }
                 } ?: continue
 
                 writeAction {
-                    setName(checkNotNull(method.nameIdentifier), "bar")
+                    setName(checkNotNull(method.nameIdentifier), "prebar")
+                }
+            }
+        }
+    }
+
+    private val dummyPostprocesorEP = object : J2kPostprocessorExtension {
+        override suspend fun processFiles(
+            project: Project,
+            files: List<KtFile>,
+        ) {
+            for (file in files) {
+                val firstNamedParameter = readAction {
+                    file.findDescendantOfType<KtParameter> { it.nameIdentifier != null }
+                } ?: continue
+
+                val references = ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll()
+                writeAction {
+                    setName(checkNotNull(firstNamedParameter.nameIdentifier), "postbar")
+                }
+                for (reference in references) {
+                    writeAction {
+                        setName(reference.element, "postbar")
+                    }
                 }
             }
         }

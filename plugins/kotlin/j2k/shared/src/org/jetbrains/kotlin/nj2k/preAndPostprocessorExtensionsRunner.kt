@@ -10,13 +10,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.j2k.J2kExtension
+import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
+import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * Before conversion, runs all registered custom preprocessor extensions (i.e. classes implementing `J2kPreprocessorExtension` and
  * registered in their parent plugin's xml file).
  */
 object PreprocessorExtensionsRunner : J2kExtensionsRunner<PsiJavaFile, J2kPreprocessorExtension>("Custom Preprocessing")
+
+object PostprocessorExtensionsRunner : J2kExtensionsRunner<KtFile, J2kPostprocessorExtension>("Custom Postprocessing")
 
 abstract class J2kExtensionsRunner<T : PsiFile, U : J2kExtension<T>>(private val phaseName: String) {
     fun runProcessors(project: Project, files: List<T>, processorExtensions: List<U>) {
