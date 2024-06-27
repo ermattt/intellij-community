@@ -1079,6 +1079,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/class/anonymousClass.java");
         }
 
+        @TestMetadata("metaIssues.java")
+        public void testMetaIssues() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/class/metaIssues.java");
+        }
+
         @TestMetadata("class.java")
         public void testClass() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/class/class.java");
