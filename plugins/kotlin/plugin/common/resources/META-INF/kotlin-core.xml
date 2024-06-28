@@ -315,6 +315,9 @@
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
     <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
+
+    <j2kPostprocessorExtension implementation="org.jetbrains.kotlin.j2k.FooPostprocessorExtension"/>
+    <j2kPostprocessorExtension implementation="org.jetbrains.kotlin.j2k.BarPostprocessorExtension"/>
   </extensions>
 
   <!-- Line markers -->
