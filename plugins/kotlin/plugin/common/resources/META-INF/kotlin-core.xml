@@ -98,7 +98,7 @@
 
     <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
-    
+
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
@@ -322,6 +322,8 @@
 
     <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.FooPreprocessorExtension"/>
     <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.BarPreprocessorExtension"/>
+    <j2kPostprocessorExtension implementation="org.jetbrains.kotlin.j2k.FooPostprocessorExtension"/>
+    <j2kPostprocessorExtension implementation="org.jetbrains.kotlin.j2k.BarPostprocessorExtension"/>
   </extensions>
 
   <!-- Line markers -->
