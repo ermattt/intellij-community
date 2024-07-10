@@ -2,27 +2,28 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.impl.PsiImplUtil.setName
-import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import com.intellij.psi.PsiCallExpression
 
 class FooPreprocessorExtension : J2kPreprocessorExtension {
 
-    override fun processFiles(
+    override suspend fun processFiles(
         project: Project,
         files: List<PsiJavaFile>,
     ) {
         for (file in files) {
-            val firstNamedParameter = runReadAction {
-                file.classes.firstOrNull()?.findDescendantOfType<PsiParameter> { it.nameIdentifier != null && it.name != "bar" }
+            val reference = readAction {
+                file.classes.firstOrNull()?.findDescendantOfType<PsiReferenceExpression> { !it.isQualified && it.parent !is PsiCallExpression && it.referenceName?.startsWith("m") == true }
             } ?: continue
 
-            runUndoTransparentActionInEdt(inWriteAction = true) {
-                setName(checkNotNull(firstNamedParameter.nameIdentifier), "foo")
+            writeAction {
+                setName(checkNotNull(reference), "this.${reference.text}")
             }
         }
     }
