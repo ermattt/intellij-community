@@ -63,6 +63,9 @@ class JavaToJKTreeBuilder(
     private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
     private val formattingCollector = FormattingCollector()
 
+    var xs: List<String> = ArrayList()
+    var strings: List<String>? = null
+
     // Per-file property with collected nullability information for various declarations.
     // Needs to be flushed before building the tree for each root element.
     private var declarationNullabilityInfo: DeclarationNullabilityInfo? = null
@@ -73,6 +76,8 @@ class JavaToJKTreeBuilder(
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
         declarationNullabilityInfo = null
+
+        xs = if (strings == null) ArrayList() else ArrayList(strings!!)
 
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
