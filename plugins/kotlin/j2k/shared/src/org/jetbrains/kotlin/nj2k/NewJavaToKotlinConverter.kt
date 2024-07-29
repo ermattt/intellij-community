@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -21,7 +22,10 @@ import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -34,6 +38,9 @@ class NewJavaToKotlinConverter(
     val phasesCount = J2KConversionPhase.entries.size
     val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
     private val phaseDescription: String = KotlinNJ2KBundle.message("j2k.phase.converting")
+    
+    //private val logger = logger<NewJavaToKotlinConverter>()
+    val logger = Logger.getInstance(NewJavaToKotlinConverter::class.java)
 
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
@@ -92,28 +99,31 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
-        println("in elementsToKotlin 6.25.2.46")
-        val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        println("  contextElement = $contextElement")
-        println("  targetModule = ${targetModule?.name}")
-        println("  targetFile = ${targetFile?.name}")
-        val productionModuleInfo = targetModule?.productionOrTestSourceModuleInfo
-        println("  productionModuleInfo = ${productionModuleInfo?.name?.identifier} ($productionModuleInfo)")
-        val targetKaModule = productionModuleInfo?.toKaModule()
-        println("  targetKaModule = $targetKaModule")
+        println("[print] in elementsToKotlin 7.23")
 
-        return allowAnalysisOnEdt {
-            // TODO
-            // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
-            // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
+        val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
+        val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
+
+        // TODO
+        // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
+        // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
 
         return when {
             targetKaModule != null -> {
                 analyze(targetKaModule) {
-                    println("  about to call doConvertElementsToKotlin")
+                    println("inside `analyze(targetKaModule)`, about to call doConvertElementsToKotlin")
                     doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
                 }
             }
+
+            targetFile != null -> {
+                analyze(targetFile) {
+                    println("inside `analyze(targetFile)`, about to call doConvertElementsToKotlin")
+                    doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
+                }
+            }
+
+            else -> Result.EMPTY
         }
     }
 
@@ -125,6 +135,8 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean
     ): Result {
+        logger.error("Start of doConvertElementsToKotlin")
+        logger.assertTrue(1+1 == 2, "  [assertTrue] Start of doConvertElementsToKotlin")
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)
@@ -146,6 +158,7 @@ class NewJavaToKotlinConverter(
                     || element is PsiPackageStatement
         }
 
+        logger.error("  about to compute elementsWithAsts")
         val elementsWithAsts = inputElements.mapIndexed { i, element ->
             processor.updateState(fileIndex = i, phase = BUILD_AST, phaseDescription)
             element to treeBuilder.buildTree(element, saveImports)
