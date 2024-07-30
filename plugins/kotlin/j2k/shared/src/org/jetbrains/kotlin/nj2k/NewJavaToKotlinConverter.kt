@@ -99,10 +99,14 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
-        println("[print] in elementsToKotlin 7.23")
+        println("Start of NJTK::elementsToKotlin")
 
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
+        println( "    contextElement = $contextElement, targetModule = ${targetModule?.name}, targetFile = ${targetFile?.name}")
+        val productionModuleInfo = targetModule?.productionOrTestSourceModuleInfo
+        println("  productionModuleInfo = ${productionModuleInfo}")
+        val targetKaModule = productionModuleInfo?.toKaModule()
+        println("  targetKaModule = $targetKaModule")
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
@@ -136,7 +140,6 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean
     ): Result {
         logger.error("Start of doConvertElementsToKotlin")
-        logger.assertTrue(1+1 == 2, "  [assertTrue] Start of doConvertElementsToKotlin")
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)
