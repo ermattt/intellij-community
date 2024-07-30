@@ -71,8 +71,7 @@ class JavaToKotlinAction : AnAction() {
             settings: ConverterSettings = defaultSettings
         ): List<KtFile> {
             println("======== convertFiles")
-            logger.error("======== convertFiles [logger]")
-            logger.assertTrue(1+1 == 2, "[assertTrue] ======== convertFiles")
+
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             println("  found ${javaFiles.size} java files")
 
