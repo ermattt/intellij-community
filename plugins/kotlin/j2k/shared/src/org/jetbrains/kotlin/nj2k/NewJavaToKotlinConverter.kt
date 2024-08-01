@@ -75,6 +75,7 @@ class NewJavaToKotlinConverter(
         val (results, externalCodeProcessing, context) = runReadAction {
             println("   just inside readAction before elementsToKotlin, isDumb =${dumbService.isDumb}")
             elementsToKotlin(files, withProgressProcessor, bodyFilter)
+        }
         println("   results of elementsToKotlin size = ${results.size}")
 
         val kotlinFiles = results.mapIndexed { i, result ->
