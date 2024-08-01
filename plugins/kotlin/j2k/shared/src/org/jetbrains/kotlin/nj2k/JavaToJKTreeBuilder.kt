@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.j2k.Nullability.*
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -73,9 +73,10 @@ class JavaToJKTreeBuilder(
     }
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
+        println("JavaToJKTreeBuilder::buildTree Start, psi = $psi\n----------------\n")
         nullabilityInfo = null
 
-        return when (psi) {
+        val r = when (psi) {
             is PsiJavaFile -> psi.toJK()
             is PsiReferenceExpression -> with(expressionTreeMapper) { psi.toJK(ignoreFacades = false) }
             is PsiExpression -> with(expressionTreeMapper) { psi.toJK() }
@@ -96,6 +97,8 @@ class JavaToJKTreeBuilder(
 
             else -> null
         }?.let { JKTreeRoot(it) }
+        println("JavaToJKTreeBuilder::buildTree End, return = $r\n----------------\n")
+        return r
     }
 
     private inner class ExpressionTreeMapper {
@@ -269,7 +272,9 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiLiteralExpression.toJK(): JKExpression {
+            println("  PsiLiteralExpression.toJK(), ${this.text}")
             require(this is PsiLiteralExpressionImpl)
+            println("  PsiLiteralExpression.toJK() after require")
             return when (literalElementType) {
                 JavaTokenType.NULL_KEYWORD -> JKLiteralExpression("null", NULL)
                 JavaTokenType.TRUE_KEYWORD -> JKLiteralExpression("true", BOOLEAN)
@@ -330,6 +335,7 @@ class JavaToJKTreeBuilder(
 
         //TODO mostly copied from old j2k, refactor
         private fun PsiMethodCallExpression.toJK(): JKExpression {
+            println("  PsiMethodCallExpression.toJK(), ${this.methodExpression.referenceName}")
             val arguments = argumentList
             val typeArguments = getExplicitTypeArguments().toJK()
             val qualifier = methodExpression.qualifierExpression?.toJK()?.withLineBreaksFrom(methodExpression.qualifierExpression)
@@ -520,7 +526,9 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiNewExpression.toJK(): JKExpression {
+            println("  PsiNewExpression.toJK(), ${this.text}")
             require(this is PsiNewExpressionImpl)
+            println("  PsiNewExpression.toJK() after require")
             val newExpression =
                 if (findChildByRole(ChildRole.LBRACKET) != null) {
                     arrayInitializer?.toJK() ?: run {
@@ -667,6 +675,7 @@ class JavaToJKTreeBuilder(
             }
 
         fun PsiClass.toJK(): JKClass {
+            println("  PsiClass.toJK(), ${this.name}")
             val jkClass = if (isRecord) toJKRecordClass() else toJKClass()
             jkClass.psi = this
             symbolProvider.provideUniverseSymbol(psi = this, jkClass)
@@ -929,6 +938,7 @@ class JavaToJKTreeBuilder(
             }
 
         fun PsiMethod.toJK(): JKMethod {
+            println("  PsiMethod.toJK(), ${this.name}")
             return JKMethodImpl(
                 JKTypeElement(
                     returnType?.toJK()
@@ -1159,12 +1169,20 @@ class JavaToJKTreeBuilder(
     }
 
     private fun PsiJavaFile.toJK(): JKFile {
+        println("  PsiJavaFile.toJK()")
         collectNullabilityInfo(this)
+        println("  PsiJavaFile.toJK(), right after collectNullabilityInfo")
 
+        val packageStatement = packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier(""))
+        println("  PsiJavaFile.toJK(), right after packageStatement")
+        val importsList = importList.toJK(saveImports = false)
+        println("  PsiJavaFile.toJK(), right after importsList")
+        val declarationList = with(declarationMapper) { classes.map { it.toJK() } }
+        println("  PsiJavaFile.toJK(), right after declarationList")
         return JKFile(
-            packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier("")),
-            importList.toJK(saveImports = false),
-            with(declarationMapper) { classes.map { it.toJK() } }
+            packageStatement,
+            importsList,
+            declarationList
         )
     }
 
