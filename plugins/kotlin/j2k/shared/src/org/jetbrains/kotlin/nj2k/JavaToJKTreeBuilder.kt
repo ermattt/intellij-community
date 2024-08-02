@@ -1170,7 +1170,7 @@ class JavaToJKTreeBuilder(
     private fun PsiJavaFile.toJK(): JKFile {
         println("  PsiJavaFile.toJK()")
         collectNullabilityInfo(this)
-        println("  PsiJavaFile.toJK(), right after collectNullabilityInfo")
+        println("  PsiJavaFile.toJK(), after call to collectNullabilityInfo")
 
         val packageStatement = packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier(""))
         println("  PsiJavaFile.toJK(), right after packageStatement")
@@ -1190,12 +1190,17 @@ class JavaToJKTreeBuilder(
      * TODO support not only PsiJavaFile but any PsiElement
      */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
+        println("collectNullabilityInfo start, file = ${element.name}")
         val nullityInferrer = J2KNullityInferrer()
+        println("  created nullityInferrer")
         try {
             nullityInferrer.collect(element)
+            println("  just after `nullityInferrer.collect(element)`")
         } catch (e: ProcessCanceledException) {
+            println("  ProcessCanceledException, $e")
             throw e
         } catch (t: Throwable) {
+            println("  Throwable, $t")
             LOG.error(t)
         }
 
@@ -1205,7 +1210,9 @@ class JavaToJKTreeBuilder(
             nullityInferrer.nullableElements,
             nullityInferrer.notNullElements
         )
+        println("  created nullabilityInfo")
         typeFactory.nullabilityInfo = nullabilityInfo
+        println("collectNullabilityInfo end")
     }
 
     private fun PsiImportList?.toJK(saveImports: Boolean): JKImportList =
