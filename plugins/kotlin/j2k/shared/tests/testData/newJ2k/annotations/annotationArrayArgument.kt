@@ -1,19 +1,10 @@
-import kotlin.reflect.KClass
+annotation class Foo {
+    companion object {
+        const val FOO3: String = "foo3"
+        const val FOO4: String = "foo4"
 
-annotation class Ann(vararg val value: Inner, val test1: Array<InnerParam> = [InnerParam(C::class)])
-
-annotation class Inner
-
-annotation class InnerParam(val value: KClass<*>)
-
-@Ann(value = [Inner(), Inner()], test1 = [InnerParam(C::class)])
-class C
-
-@Ann(Inner(), Inner())
-class D
-
-@Ann(value = [Inner()])
-class E
-
-@Ann(value = [Inner()], test1 = [InnerParam(value = C::class)])
-class F
+        // this comment should only appear once!
+        const val FOO1: String = "foo1"
+        const val FOO2: String = "foo2"
+    }
+}
