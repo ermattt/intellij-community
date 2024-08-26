@@ -493,7 +493,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   @Override
   public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
-    JavaResolveResult[] results = multiResolve(incompleteCode);
+    JavaResolveResult[] results = new JavaResolveResult[0]; //multiResolve(incompleteCode);
+    try {
+      results = multiResolve(incompleteCode);
+    } catch (Throwable t) {
+      System.out.println("PsiReferenceExpressionImpl::advanceResolve threw error for '" + this.getText() + "':\n" + t.getMessage() + "\n" + t.getStackTrace().toString());
+      System.out.println("Attempting to continue");
+    }
     return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
   }
 
