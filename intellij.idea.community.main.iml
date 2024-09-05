@@ -221,9 +221,20 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.charts" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
+<<<<<<< HEAD
     <orderEntry type="module" module-name="intellij.json.split" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" scope="TEST" />
+=======
+
+    <orderEntry type="module" module-name="intellij.android.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.layoutlib" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.compose-designer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.compose-ide-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.design-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.navigator" scope="RUNTIME" />
+>>>>>>> 26afa66a4fce (Add androi modules to intellij.idea.community.main.iml (inspired by Intellij with Android run configuraton))
   </component>
 </module>
