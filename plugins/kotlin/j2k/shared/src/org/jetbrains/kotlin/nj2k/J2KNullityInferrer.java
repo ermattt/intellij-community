@@ -193,14 +193,9 @@ class J2KNullityInferrer {
     }
 
     public void collect(@NotNull PsiFile file) {
-        System.out.println("J2KNullityInferrer::collect start, file " + file.getName());
         runPreprocessing(file);
-        System.out.println("  after runPreprocessing");
         inferNullabilityIteratively(file);
-        System.out.println("  after inferNullabilityIteratively");
         flushCaches();
-        System.out.println("  after flushCaches");
-        System.out.println("J2KNullityInferrer::collect end");
     }
 
     // Mark all types with known nullability inferred from Java DFA
