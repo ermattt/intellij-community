@@ -821,6 +821,7 @@ class JavaToJKTreeBuilder(
             visibility(referenceSearcher) { ast, psi -> ast.withFormattingFrom(psi) }
 
         fun PsiField.toJK(): JKField {
+            println("  PsiField.toJK(), ${this.name}")
             val mutability = when {
                 containingClass?.isInterface == true -> IMMUTABLE
                 visibility().visibility == Visibility.PRIVATE && canBeImmutable(this) -> IMMUTABLE
@@ -1169,20 +1170,32 @@ class JavaToJKTreeBuilder(
 
     private fun PsiJavaFile.toJK(): JKFile {
         println("  PsiJavaFile.toJK()")
-        collectNullabilityInfo(this)
-        println("  PsiJavaFile.toJK(), after call to collectNullabilityInfo")
+        try {
+            collectNullabilityInfo(this)
+            println("  PsiJavaFile.toJK(), after call to collectNullabilityInfo")
+        } catch (t: Throwable) {
+            println("  PsiJavaFile.toJK(), call to collectNullabilityInfo threw error: $t")
+        }
 
         val packageStatement = packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier(""))
         println("  PsiJavaFile.toJK(), right after packageStatement")
         val importsList = importList.toJK(saveImports = false)
         println("  PsiJavaFile.toJK(), right after importsList")
-        val declarationList = with(declarationMapper) { classes.map { it.toJK() } }
-        println("  PsiJavaFile.toJK(), right after declarationList")
-        return JKFile(
-            packageStatement,
-            importsList,
-            declarationList
-        )
+        try {
+            val declarationList = with(declarationMapper) { classes.map { it.toJK() } }
+            println("  PsiJavaFile.toJK(), right after declarationList")
+            return JKFile(
+                packageStatement,
+                importsList,
+                declarationList
+            )
+        } catch (t: Throwable) {
+            println("  PsiJavaFile.toJK(), initializing declarationList threw error: $t")
+            println("stacktrace:\n${t.stackTraceToString()}\n-------------------------------------\n")
+            println("cause:\n${t.cause}")
+            println("cause.stacktrace:\n${t.cause?.stackTraceToString()}\n-------------------------------------\n")
+            throw t
+        }
     }
 
     /**
@@ -1197,10 +1210,10 @@ class JavaToJKTreeBuilder(
             nullityInferrer.collect(element)
             println("  just after `nullityInferrer.collect(element)`")
         } catch (e: ProcessCanceledException) {
-            println("  ProcessCanceledException, $e")
+            println("  in collectNullabilityInfo, threw ProcessCanceledException, $e")
             throw e
         } catch (t: Throwable) {
-            println("  Throwable, $t")
+            println("  in collectNullabilityInfo, threw $t")
             LOG.error(t)
         }
 
