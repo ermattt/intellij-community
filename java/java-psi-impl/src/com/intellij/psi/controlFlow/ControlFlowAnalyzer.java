@@ -1671,7 +1671,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-    System.out.println("ControlFlowAnalyzer::visitMethodCallExpression, expr = " + expression.getText());
     ArrayDeque<PsiMethodCallExpression> calls = new ArrayDeque<>();
     while (true) {
       calls.addFirst(expression);
@@ -1694,7 +1693,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       emitEmptyInstruction();
 
       //generate jumps to all handled exception handlers
-      System.out.println("  about to call generateExceptionJumps for method call expr = " + call.getText());
       generateExceptionJumps(call, ExceptionUtil.getUnhandledExceptions(call, call.getParent()));
 
       finishElement(call);

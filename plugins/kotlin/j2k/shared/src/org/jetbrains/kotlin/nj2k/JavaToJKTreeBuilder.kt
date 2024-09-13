@@ -97,7 +97,6 @@ class JavaToJKTreeBuilder(
 
             else -> null
         }?.let { JKTreeRoot(it) }
-        println("JavaToJKTreeBuilder::buildTree End, return = $r\n----------------\n")
         return r
     }
 
@@ -272,9 +271,7 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiLiteralExpression.toJK(): JKExpression {
-            println("  PsiLiteralExpression.toJK(), ${this.text}")
             require(this is PsiLiteralExpressionImpl)
-            println("  PsiLiteralExpression.toJK() after require")
             return when (literalElementType) {
                 JavaTokenType.NULL_KEYWORD -> JKLiteralExpression("null", NULL)
                 JavaTokenType.TRUE_KEYWORD -> JKLiteralExpression("true", BOOLEAN)
@@ -334,7 +331,6 @@ class JavaToJKTreeBuilder(
 
         //TODO mostly copied from old j2k, refactor
         private fun PsiMethodCallExpression.toJK(): JKExpression {
-            println("  PsiMethodCallExpression.toJK(), ${this.methodExpression.referenceName}")
             val arguments = argumentList
             val typeArguments = getExplicitTypeArguments().toJK()
             val qualifier = methodExpression.qualifierExpression?.toJK()?.withLineBreaksFrom(methodExpression.qualifierExpression)
@@ -525,9 +521,7 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiNewExpression.toJK(): JKExpression {
-            println("  PsiNewExpression.toJK(), ${this.text}")
             require(this is PsiNewExpressionImpl)
-            println("  PsiNewExpression.toJK() after require")
             val newExpression =
                 if (findChildByRole(ChildRole.LBRACKET) != null) {
                     arrayInitializer?.toJK() ?: run {
@@ -674,7 +668,6 @@ class JavaToJKTreeBuilder(
             }
 
         fun PsiClass.toJK(): JKClass {
-            println("  PsiClass.toJK(), ${this.name}")
             val jkClass = if (isRecord) toJKRecordClass() else toJKClass()
             jkClass.psi = this
             symbolProvider.provideUniverseSymbol(psi = this, jkClass)
@@ -821,7 +814,6 @@ class JavaToJKTreeBuilder(
             visibility(referenceSearcher) { ast, psi -> ast.withFormattingFrom(psi) }
 
         fun PsiField.toJK(): JKField {
-            println("  PsiField.toJK(), ${this.name}")
             val mutability = when {
                 containingClass?.isInterface == true -> IMMUTABLE
                 visibility().visibility == Visibility.PRIVATE && canBeImmutable(this) -> IMMUTABLE
@@ -938,7 +930,6 @@ class JavaToJKTreeBuilder(
             }
 
         fun PsiMethod.toJK(): JKMethod {
-            println("  PsiMethod.toJK(), ${this.name}")
             return JKMethodImpl(
                 JKTypeElement(
                     returnType?.toJK()
@@ -995,7 +986,6 @@ class JavaToJKTreeBuilder(
         }
 
         fun PsiCodeBlock.toJK(): JKBlock {
-            println("  PsiCodeBlock.toJK(), ${this.text.take(50)}")
             immutableVariables.computeIfAbsent(this) { getImmutableLocalVariablesInBlock(this) }
             return JKBlockImpl(
                 if (withBody) statements.map { it.toJK() } else listOf(createTodoExpression().asStatement())
@@ -1170,21 +1160,16 @@ class JavaToJKTreeBuilder(
     }
 
     private fun PsiJavaFile.toJK(): JKFile {
-        println("  PsiJavaFile.toJK()")
         try {
             collectNullabilityInfo(this)
-            println("  PsiJavaFile.toJK(), after call to collectNullabilityInfo")
         } catch (t: Throwable) {
             println("  PsiJavaFile.toJK(), call to collectNullabilityInfo threw error: $t")
         }
 
         val packageStatement = packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier(""))
-        println("  PsiJavaFile.toJK(), right after packageStatement")
         val importsList = importList.toJK(saveImports = false)
-        println("  PsiJavaFile.toJK(), right after importsList")
         try {
             val declarationList = with(declarationMapper) { classes.map { it.toJK() } }
-            println("  PsiJavaFile.toJK(), right after declarationList")
             return JKFile(
                 packageStatement,
                 importsList,
@@ -1204,12 +1189,9 @@ class JavaToJKTreeBuilder(
      * TODO support not only PsiJavaFile but any PsiElement
      */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
-        println("collectNullabilityInfo start, file = ${element.name}")
         val nullityInferrer = J2KNullityInferrer()
-        println("  created nullityInferrer")
         try {
             nullityInferrer.collect(element)
-            println("  just after `nullityInferrer.collect(element)`")
         } catch (e: ProcessCanceledException) {
             println("  in collectNullabilityInfo, threw ProcessCanceledException, $e")
             throw e
@@ -1224,9 +1206,7 @@ class JavaToJKTreeBuilder(
             nullityInferrer.nullableElements,
             nullityInferrer.notNullElements
         )
-        println("  created nullabilityInfo")
         typeFactory.nullabilityInfo = nullabilityInfo
-        println("collectNullabilityInfo end")
     }
 
     private fun PsiImportList?.toJK(saveImports: Boolean): JKImportList =

@@ -70,10 +70,7 @@ class JavaToKotlinAction : AnAction() {
             forceUsingOldJ2k: Boolean = false,
             settings: ConverterSettings = defaultSettings
         ): List<KtFile> {
-            println("======== convertFiles")
-
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
-            println("  found ${javaFiles.size} java files")
 
             var converterResult: FilesResult? = null
 
@@ -83,7 +80,6 @@ class JavaToKotlinAction : AnAction() {
                 val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
-                println("  in convertWithStatistics, about to run conversion")
                 val conversionTime = measureTimeMillis {
                     converterResult = converter.filesToKotlin(
                         javaFiles,
@@ -93,7 +89,7 @@ class JavaToKotlinAction : AnAction() {
                         postprocessorExtensions = J2kPostprocessorExtension.EP_NAME.extensionList
                     )
                 }
-                println("  converterResult is null = ${converterResult == null} ")
+
                 val linesCount = runReadAction {
                     javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
@@ -128,7 +124,8 @@ class JavaToKotlinAction : AnAction() {
                         { convertWithStatistics() },
                         title, /* canBeCanceled = */ true,
                         project
-                    )) return@executeCommand
+                    )
+                ) return@executeCommand
 
                 val result = converterResult ?: return@executeCommand
                 val externalCodeProcessing = result.externalCodeProcessing
@@ -164,10 +161,11 @@ class JavaToKotlinAction : AnAction() {
 
             var result: (() -> Unit)? = null
             ProgressManager.getInstance().runProcessWithProgressSynchronously({
-                runReadAction {
-                    result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
-                }
-            }, title, /* canBeCanceled = */ true, project)
+                                                                                  runReadAction {
+                                                                                      result =
+                                                                                          processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
+                                                                                  }
+                                                                              }, title, /* canBeCanceled = */ true, project)
 
             return result
         }

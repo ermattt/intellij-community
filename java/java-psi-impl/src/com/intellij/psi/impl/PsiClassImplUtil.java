@@ -982,7 +982,6 @@ public final class PsiClassImplUtil {
     if (upperBound instanceof PsiClassType) {
       return new PsiClassType[] {(PsiClassType)upperBound};
     }
-    System.out.println("PsiClassImplUtil::getExtendsListTypes, psiClass = " + psiClass.getQualifiedName());
     PsiReferenceList extendsList = psiClass.getExtendsList();
     if (extendsList != null) {
       return extendsList.getReferencedTypes();
