@@ -995,6 +995,7 @@ class JavaToJKTreeBuilder(
         }
 
         fun PsiCodeBlock.toJK(): JKBlock {
+            println("  PsiCodeBlock.toJK(), ${this.text.take(50)}")
             immutableVariables.computeIfAbsent(this) { getImmutableLocalVariablesInBlock(this) }
             return JKBlockImpl(
                 if (withBody) statements.map { it.toJK() } else listOf(createTodoExpression().asStatement())

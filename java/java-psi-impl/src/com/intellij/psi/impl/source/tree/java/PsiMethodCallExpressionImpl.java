@@ -47,6 +47,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
   @Override
   public @NotNull JavaResolveResult resolveMethodGenerics() {
+    System.out.println("PsiMethodCallExpressionImpl::resolveMethodGenerics, expr = " + this.getText());
     return getMethodExpression().advancedResolve(false);
   }
 
