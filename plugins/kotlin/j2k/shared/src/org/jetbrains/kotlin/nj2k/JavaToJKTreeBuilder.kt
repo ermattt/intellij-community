@@ -73,6 +73,7 @@ class JavaToJKTreeBuilder(
     }
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
+        println("Start of JavaToJKTreeBuilder::buildTree for element '${psi.text.take(50)}...'")
         nullabilityInfo = null
 
         return when (psi) {

@@ -21,7 +21,10 @@ import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -61,6 +64,7 @@ class NewJavaToKotlinConverter(
 
         PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
 
+        println("In NewJavaToKotlinConverter::filesToKotlin, about to run elementsToKotlin")
         val (results, externalCodeProcessing, context) = runReadAction {
             elementsToKotlin(files, withProgressProcessor, bodyFilter)
         }
@@ -121,6 +125,7 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean
     ): Result {
+        println("Start of NewJavaToKotlinConverter::doConvertElementsToKotlin")
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)
@@ -164,6 +169,7 @@ class NewJavaToKotlinConverter(
         )
 
         val treeRoots = elementsWithAsts.mapNotNull { it.second }
+        println("In NewJavaToKotlinConverter::doConvertElementsToKotlin, about to run ConversionsRunner.doApply")
         ConversionsRunner.doApply(treeRoots, context) { conversionIndex, conversionCount, fileIndex, description ->
             processor.updateState(
                 RUN_CONVERSIONS.phaseNumber,
