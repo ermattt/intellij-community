@@ -18,7 +18,6 @@ public class Identifier<T> {
     myNullable = isNullable;
   }
 
-  @Override
   public T getName() {
     return myName;
   }

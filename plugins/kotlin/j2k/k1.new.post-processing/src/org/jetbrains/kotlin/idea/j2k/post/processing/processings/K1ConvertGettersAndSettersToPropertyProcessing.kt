@@ -218,7 +218,7 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         val property = returnExpression?.returnedExpression?.unpackedReferenceToProperty()
         val getterType = type()
         val singleTimeUsedTarget = property?.takeIf {
-            it.containingClass() == containingClass() && getterType != null && it.type() == getterType
+            it.containingClassOrObject == containingClassOrObject && getterType != null && it.type() == getterType
         }
 
         return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
@@ -572,6 +572,7 @@ private class ClassConverter(
         val ktGetter = addGetter(getter, ktProperty, property.isFake)
         val ktSetter = setter?.let { addSetter(it, ktProperty, property.isFake) }
         val isOpen = realGetter?.function?.hasModifier(OPEN_KEYWORD) == true || realSetter?.function?.hasModifier(OPEN_KEYWORD) == true
+        val isOverride = realGetter?.function?.hasModifier(OVERRIDE_KEYWORD) == true
 
         val getterVisibility = realGetter?.function?.visibilityModifierTypeOrDefault()
         if (getterVisibility != null) {
@@ -618,6 +619,9 @@ private class ClassConverter(
         }
         if (isOpen) {
             ktProperty.addModifier(OPEN_KEYWORD)
+        }
+        if (isOverride) {
+            ktProperty.addModifier(OVERRIDE_KEYWORD)
         }
 
         moveAccessorAnnotationsToProperty(ktProperty)
