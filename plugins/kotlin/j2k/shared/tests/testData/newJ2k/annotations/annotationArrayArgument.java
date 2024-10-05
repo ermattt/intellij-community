@@ -1,28 +1,8 @@
-public @interface Ann {
-    Inner[] value();
-    InnerParam[] test1() default @InnerParam(C.class);
-}
+public @interface Foo {
 
-public @interface Inner {
-
-}
-
-public @interface InnerParam {
-    Class<?> value();
-}
-
-@Ann(value = {@Inner, @Inner}, test1 = { @InnerParam(C.class) })
-public class C {
-}
-
-@Ann({@Inner, @Inner})
-public class D {
-}
-
-@Ann(value = @Inner)
-public class E {
-}
-
-@Ann(value = {@Inner}, test1 = { @InnerParam(value = C.class) })
-public class F {
+  // this comment should only appear once!
+  String FOO1 = "foo1";
+  final String FOO2 = "foo2";
+  static String FOO3 = "foo3";
+  static final String FOO4 = "foo4";
 }
