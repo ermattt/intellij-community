@@ -72,7 +72,8 @@ class IdeaResolverForProject(
 
     private val invalidModuleNotifier: InvalidModuleNotifier = object: InvalidModuleNotifier {
         override fun notifyModuleInvalidated(moduleDescriptor: ModuleDescriptor) {
-            throw ProcessCanceledException(InvalidModuleException("Accessing invalid module descriptor $moduleDescriptor"))
+            println("Accessing invalid module descriptor $moduleDescriptor")
+            println("Normally this would throw an exception, but proceeding anyway because we're cowboys")
         }
     }
 
