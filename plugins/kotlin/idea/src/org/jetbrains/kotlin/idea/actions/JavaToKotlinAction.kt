@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -57,6 +58,7 @@ import kotlin.system.measureTimeMillis
 class JavaToKotlinAction : AnAction() {
     object Handler {
         val title: String = KotlinBundle.message("action.j2k.name")
+        val logger = Logger.getInstance(this::class.java)
 
         @OptIn(KaAllowAnalysisOnEdt::class)
         fun convertFiles(
@@ -68,7 +70,12 @@ class JavaToKotlinAction : AnAction() {
             forceUsingOldJ2k: Boolean = false,
             settings: ConverterSettings = defaultSettings
         ): List<KtFile> {
+            println("======== convertFiles")
+            logger.error("======== convertFiles [logger]")
+            logger.assertTrue(1+1 == 2, "[assertTrue] ======== convertFiles")
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
+            println("  found ${javaFiles.size} java files")
+
             var converterResult: FilesResult? = null
 
             fun convertWithStatistics() {
@@ -77,6 +84,7 @@ class JavaToKotlinAction : AnAction() {
                 val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
+                println("  in convertWithStatistics, about to run conversion")
                 val conversionTime = measureTimeMillis {
                     converterResult = converter.filesToKotlin(
                         javaFiles,
@@ -86,6 +94,7 @@ class JavaToKotlinAction : AnAction() {
                         postprocessorExtensions = J2kPostprocessorExtension.EP_NAME.extensionList
                     )
                 }
+                println("  converterResult is null = ${converterResult == null} ")
                 val linesCount = runReadAction {
                     javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
