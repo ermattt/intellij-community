@@ -16,12 +16,16 @@ object ConversionsRunner {
         context: NewJ2kConverterContext,
         updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, description: String) -> Unit
     ) {
+        println("ConversionsRunner.doApply start")
         val j2kKind = if (KotlinPluginModeProvider.isK2Mode()) K2 else K1_NEW
         val conversions = J2kConverterExtension.extension(j2kKind).getConversions(context)
         val applyingConversionsMessage: String = KotlinNJ2KBundle.message("j2k.applying.conversions")
 
+        println("  # conversions = ${conversions.size}")
         for ((conversionIndex, conversion) in conversions.withIndex()) {
+            println("  $conversionIndex) conversion = ${conversion}")
             if (context.settings.basicMode && !conversion.isEnabledInBasicMode()) {
+                println("  skipping!")
                 continue
             }
 
@@ -31,9 +35,13 @@ object ConversionsRunner {
 
             try {
                 conversion.runForEach(treeSequence, context)
+                println("  finished")
             } catch (ignored: UninitializedPropertyAccessException) {
+                println("  threw UninitializedPropertyAccessException: $ignored")
                 // This should only happen on copy-pasting broken (incomplete) code
             }
         }
+
+        println("ConversionsRunner.doApply end")
     }
 }

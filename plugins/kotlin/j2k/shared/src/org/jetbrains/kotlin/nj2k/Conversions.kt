@@ -19,7 +19,9 @@ abstract class Conversion(val context: NewJ2kConverterContext) {
     context(KaSession)
     fun runForEach(treeRoots: Sequence<JKTreeElement>, context: NewJ2kConverterContext) {
         for (root in treeRoots) {
+            println("    running for root $root")
             run(root, context)
+            println("    finished for root $root")
         }
     }
 
