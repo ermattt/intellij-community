@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -41,6 +42,7 @@ class NewJavaToKotlinConverter(
     
     //private val logger = logger<NewJavaToKotlinConverter>()
     val logger = Logger.getInstance(NewJavaToKotlinConverter::class.java)
+    val dumbService = DumbService.getInstance(project)
 
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
@@ -69,11 +71,11 @@ class NewJavaToKotlinConverter(
 
         PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
 
+        println(" In NewJavaToKotlinConverter.filesToKotlin, isDumb =${dumbService.isDumb}")
         val (results, externalCodeProcessing, context) = runReadAction {
-            println("  about to run elementsToKotlin")
+            println("   just inside readAction before elementsToKotlin, isDumb =${dumbService.isDumb}")
             elementsToKotlin(files, withProgressProcessor, bodyFilter)
-        }
-        println("  done running elementsToKotlin")
+        println("   results of elementsToKotlin size = ${results.size}")
 
         val kotlinFiles = results.mapIndexed { i, result ->
             val javaFile = files[i]
@@ -99,14 +101,14 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean = false
     ): Result {
-        println("Start of NJTK::elementsToKotlin")
+        println("Start of NJTK::elementsToKotlin, isDumb =${dumbService.isDumb}")
 
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
         println( "    contextElement = $contextElement, targetModule = ${targetModule?.name}, targetFile = ${targetFile?.name}")
         val productionModuleInfo = targetModule?.productionOrTestSourceModuleInfo
         println("  productionModuleInfo = ${productionModuleInfo}")
         val targetKaModule = productionModuleInfo?.toKaModule()
-        println("  targetKaModule = $targetKaModule")
+        println("  targetKaModule = $targetKaModule, isDumb =${dumbService.isDumb}")
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
@@ -139,7 +141,7 @@ class NewJavaToKotlinConverter(
         bodyFilter: ((PsiElement) -> Boolean)?,
         forInlining: Boolean
     ): Result {
-        logger.error("Start of doConvertElementsToKotlin")
+        println("Start of doConvertElementsToKotlin")
         val resolver = JKResolver(project, targetModule, contextElement)
         val symbolProvider = JKSymbolProvider(resolver)
         val typeFactory = JKTypeFactory(symbolProvider)
@@ -161,11 +163,12 @@ class NewJavaToKotlinConverter(
                     || element is PsiPackageStatement
         }
 
-        logger.error("  about to compute elementsWithAsts")
+        println("  about to compute elementsWithAsts")
         val elementsWithAsts = inputElements.mapIndexed { i, element ->
             processor.updateState(fileIndex = i, phase = BUILD_AST, phaseDescription)
             element to treeBuilder.buildTree(element, saveImports)
         }
+        println("  after computing elementsWithAsts, size of elementsWithAsts = ${elementsWithAsts.size}")
 
         fun isInConversionContext(element: PsiElement): Boolean =
             inputElements.any { it == element || it.isAncestor(element, strict = true) }
@@ -184,6 +187,7 @@ class NewJavaToKotlinConverter(
         )
 
         val treeRoots = elementsWithAsts.mapNotNull { it.second }
+        println("  about to call `ConversionsRunner.doApply`")
         ConversionsRunner.doApply(treeRoots, context) { conversionIndex, conversionCount, fileIndex, description ->
             processor.updateState(
                 RUN_CONVERSIONS.phaseNumber,
@@ -193,6 +197,7 @@ class NewJavaToKotlinConverter(
                 description
             )
         }
+        println("  after `ConversionsRunner.doApply`")
 
         val results = elementsWithAsts.mapIndexed { i, elementWithAst ->
             processor.updateState(fileIndex = i, phase = PRINT_CODE, phaseDescription)
