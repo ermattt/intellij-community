@@ -15,9 +15,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
+    val resourceRegex = "[a-z\\.]+\\.R\\.".toRegex()
+
     private val filter = filter@{ element: PsiElement ->
         when (element) {
             is KtQualifiedExpression -> when {
+                resourceRegex.matchesAt(element.text, 0) -> ShortenReferences.FilterResult.SKIP
                 JKImportStorage.isImportNeededForCall(element) -> ShortenReferences.FilterResult.PROCESS
                 else -> ShortenReferences.FilterResult.SKIP
             }
