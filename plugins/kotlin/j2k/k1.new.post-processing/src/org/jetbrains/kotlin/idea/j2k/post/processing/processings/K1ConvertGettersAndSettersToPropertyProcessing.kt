@@ -10,6 +10,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -640,6 +641,7 @@ private class ClassConverter(
 
         if (getter is RealGetter) {
             saveSurroundingComments(getter, ktGetter)
+            val containingClass = getter.function.getStrictParentOfType<KtClassOrObject>()
 
             // update original function references to property references
             getter.function.forAllUsages { usage ->
@@ -648,7 +650,8 @@ private class ClassConverter(
                 if (qualifier != null) {
                     qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
                 } else {
-                    callExpression.replace(psiFactory.createExpression("this.${getter.name}"))
+                    val selectorText = getSelectorText(containingClass, usage)
+                    callExpression.replace(psiFactory.createExpression("${selectorText}.${getter.name}"))
                 }
             }
         }
@@ -787,6 +790,7 @@ private class ClassConverter(
     }
 
     private fun KtProperty.renameTo(newName: String) {
+        val propertyContainingClass = this.getStrictParentOfType<KtClassOrObject>()
         for (usage in usages(searcher)) {
             val element = usage.element
             val isBackingField = element is KtNameReferenceExpression
@@ -795,11 +799,35 @@ private class ClassConverter(
                     && isAncestor(element)
             if (isBackingField) continue
             val replacer =
-                if (element.parent is KtQualifiedExpression) psiFactory.createExpression(newName)
-                else psiFactory.createExpression("this.$newName")
+                if (element.parent is KtQualifiedExpression) {
+                    psiFactory.createExpression(newName)
+                } else {
+                    val selectorText = getSelectorText(propertyContainingClass, element)
+                    psiFactory.createExpression("${selectorText}.$newName")
+                }
             element.replace(replacer)
         }
         setName(newName)
+    }
+
+    private fun getSelectorText(declarationClass: KtClassOrObject?, usage: PsiElement): String {
+        val fixme = "FIXME_UNKNOWN_OUTER_CLASS_REFERENCE"
+        val usageClass = usage.getStrictParentOfType<KtClassOrObject>()
+        if (declarationClass == null || usageClass == null) {
+            return fixme
+        }
+        // If the definition class isn't an ancestor node of the usage, then we're probably referring to a member defined in a superclass
+        return if (declarationClass == usageClass || !declarationClass.anyDescendantOfType<KtClassOrObject> { it == usageClass }) {
+            "this"
+        } else {
+            var declarationClassName = declarationClass.name ?: return fixme
+            var outerMostDeclarationClass = declarationClass.getStrictParentOfType<KtClassOrObject>()
+            while (outerMostDeclarationClass != null) {
+                declarationClassName = "${outerMostDeclarationClass.name ?: fixme}.$declarationClassName"
+                outerMostDeclarationClass = outerMostDeclarationClass.getStrictParentOfType<KtClassOrObject>()
+            }
+            "this@${declarationClassName}"
+        }
     }
 
     private fun KtPropertyAccessor.isRedundant(): Boolean =
