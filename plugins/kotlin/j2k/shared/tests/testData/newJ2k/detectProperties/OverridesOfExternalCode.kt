@@ -1,8 +1,9 @@
 import javaApi.JavaClassDerivedFromKotlinClassWithProperties
 import javaApi.JavaClassWithProperties
+import kotlinApi.AnotherKotlinInterface
 import kotlinApi.KotlinClassWithProperties
 
-internal open class A : KotlinClassWithProperties() {
+internal open class A : KotlinClassWithProperties(), AnotherKotlinInterface {
     override var someVar1: String
         get() = super.someVar1
         set(s) {
@@ -48,6 +49,13 @@ internal open class A : KotlinClassWithProperties() {
 
     override fun setSomething4(value: Int) {
         super.setSomething4(value)
+    }
+
+    override val name: String
+        get() = NAME
+
+    companion object {
+        var NAME: String = "A"
     }
 }
 

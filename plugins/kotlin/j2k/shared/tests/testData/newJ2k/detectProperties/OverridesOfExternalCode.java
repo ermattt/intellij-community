@@ -2,6 +2,8 @@
 // !ADD_KOTLIN_API
 // !ADD_JAVA_API
 import kotlinApi.KotlinClassWithProperties;
+import kotlinApi.AnotherKotlinInterface;
+
 import javaApi.JavaClassWithProperties;
 import javaApi.JavaClassDerivedFromKotlinClassWithProperties;
 
@@ -10,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.Override;
 import java.lang.String;
 
-class A extends KotlinClassWithProperties {
+class A extends KotlinClassWithProperties implements AnotherKotlinInterface {
+    public static String NAME = "A";
+
     @NotNull
     @Override
     public String getSomeVar1() {
@@ -68,6 +72,11 @@ class A extends KotlinClassWithProperties {
     @Override
     public void setSomething4(int value) {
         super.setSomething4(value);
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 }
 

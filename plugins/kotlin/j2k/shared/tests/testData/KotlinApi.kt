@@ -32,6 +32,10 @@ public interface KotlinInterface {
     public fun nonAbstractFun(): Int = 1
 }
 
+interface AnotherKotlinInterface {
+    val name: String
+}
+
 public fun globalFunction(s: String): String = s
 public fun nullableGlobalFunction(s: String?): String? = s
 public fun <T> globalGenericFunction(t: T): T = t

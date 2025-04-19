@@ -218,7 +218,7 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
         val property = returnExpression?.returnedExpression?.unpackedReferenceToProperty()
         val getterType = type()
         val singleTimeUsedTarget = property?.takeIf {
-            it.containingClass() == containingClass() && getterType != null && it.type() == getterType
+            it.containingClassOrObject == containingClassOrObject && getterType != null && it.type() == getterType
         }
 
         return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
