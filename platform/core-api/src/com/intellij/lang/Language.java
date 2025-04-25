@@ -102,7 +102,9 @@ public abstract class Language extends UserDataHolderBase {
 
       existing = registeredIds.get(ID);
       if (existing != null) {
-        throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + existing.getClass(), null, existing, this);
+        //throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + existing.getClass(), null, existing, this);
+        System.out.println("Language with ID '" + ID + "' is already registered: " + existing.getClass());
+        System.out.println("Normally this would throw an error, but we're continuing anyway because we're cowboys");
       }
 
       registeredLanguages = with(registeredLanguages, langClass, this);

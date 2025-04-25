@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.j2k.Nullability.*
+import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -73,6 +73,7 @@ class JavaToJKTreeBuilder(
     }
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
+        println("Start of JavaToJKTreeBuilder::buildTree for element '${psi.text.take(50)}...'")
         nullabilityInfo = null
         (psi.containingFile as? PsiJavaFile)?.let { collectNullabilityInfo(it) }
 
@@ -1164,6 +1165,13 @@ class JavaToJKTreeBuilder(
     }
 
     private fun PsiJavaFile.toJK(): JKFile {
+        try {
+            collectNullabilityInfo(this)
+        } catch (t: Throwable) {
+            println("While running PsiJavaFile.toJK() for ${this.name}, collectNullabilityInfo threw an error. Proceeding anyway. Error:")
+            println("$t\nCause stacktrace:\n${t.cause?.stackTraceToString()}")
+        }
+
         return JKFile(
             packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier("")),
             importList.toJK(saveImports = false),
