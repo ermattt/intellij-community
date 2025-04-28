@@ -2132,6 +2132,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/SpecialSetterParameterName.java");
         }
 
+        @TestMetadata("SynchronizedPropertyGetter.java")
+        public void testSynchronizedPropertyGetter() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/SynchronizedPropertyGetter.java");
+        }
+
         @TestMetadata("TestJunit4.java")
         public void testTestJunit4() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/TestJunit4.java");

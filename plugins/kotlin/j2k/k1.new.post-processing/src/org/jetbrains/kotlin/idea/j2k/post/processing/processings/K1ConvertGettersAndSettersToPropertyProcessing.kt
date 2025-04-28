@@ -222,7 +222,7 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
             it.containingClassOrObject == containingClassOrObject && getterType != null && it.type() == getterType
         }
 
-        return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+        return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null && !isAnnotatedWithSynchronized())
     }
 
     private fun KtNamedFunction.asSetter(): Setter? {
@@ -242,7 +242,13 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
             it.containingClass() == containingClass() && it.type() == parameter.type()
         }
 
-        return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+        return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null && !isAnnotatedWithSynchronized())
+    }
+
+    private fun KtNamedFunction.isAnnotatedWithSynchronized(): Boolean {
+        return annotationEntries.any { annotationEntry ->
+            println("annotationEntry.name = ${annotationEntry.shortName}")
+            annotationEntry.shortName?.identifier == "Synchronized" }
     }
 
     private fun KtExpression.statements(): List<KtExpression> =
@@ -305,6 +311,7 @@ private class PropertiesDataFilter(
         variableNameToDescriptor: Map<String, VariableDescriptor>
     ): PropertyWithAccessors? {
         val (realProperty, realGetter, realSetter, type) = propertyData
+        println("PropertiesDataFilter::getPropertyWithAccessors called for realProperty $realProperty, realGetter $realGetter, realSetter $realSetter")
 
         fun renderType(): String? = type.takeUnless { it.isError }?.let { IdeDescriptorRenderers.SOURCE_CODE.renderType(it) }
             ?: realGetter?.function?.typeReference?.text
@@ -324,6 +331,8 @@ private class PropertiesDataFilter(
 
         fun propertyIsAccessedBypassingNonPureAccessors(): Boolean {
             if (realProperty == null) return false
+            println("propertyIsAccessedBypassingNonPureAccessors called for realProperty $realProperty")
+            println("  getter annotations = ${realGetter?.function?.annotationEntries?.joinToString{ it.text }}")
             if ((realGetter == null || realGetter.isPure) && (realSetter == null || realSetter.isPure)) return false
 
             if (!realProperty.property.isPrivate()) return true
@@ -546,6 +555,7 @@ private class ClassConverter(
 
     private fun convert(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
+        println("ClassConverter::convert called for prop $property, getter $getter, setter $setter")
 
         // convenience variables
         val realGetter = getter as? RealGetter
