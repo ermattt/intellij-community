@@ -17,8 +17,7 @@ public class Identifier {
     myHasDollar = hasDollar;
     myNullable = isNullable;
   }
-
-  @Override
+  
   public String getName() {
     return myName;
   }
