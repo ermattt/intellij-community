@@ -27,11 +27,16 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
         targetModule: Module?,
         settings: ConverterSettings,
         targetFile: KtFile?
-    ): JavaToKotlinConverter =
-        NewJavaToKotlinConverter(project, targetModule, settings, targetFile)
+    ): JavaToKotlinConverter 
+        {
+            println("NewJ2kConverterExtension::createJavaToKotlinConverter")
+            return NewJavaToKotlinConverter(project, targetModule, settings, targetFile)
+        }
 
-    override fun createPostProcessor(formatCode: Boolean): PostProcessor =
-        NewJ2kPostProcessor()
+    override fun createPostProcessor(formatCode: Boolean): PostProcessor {
+        println("NewJ2kConverterExtension::createPostProcessor")
+        return NewJ2kPostProcessor()   
+    }
 
     override fun createWithProgressProcessor(
         progress: ProgressIndicator?,
@@ -40,8 +45,11 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
     ): WithProgressProcessor =
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    override fun getConversions(context: ConverterContext): List<Conversion> =
-        getNewJ2KConversions(context)
+    override fun getConversions(context: ConverterContext): List<Conversion> 
+        {
+            println("NewJ2kConverterExtension::getConversions")
+            return getNewJ2KConversions(context)
+        }
 
     override fun createPlainTextPasteImportResolver(
         conversionData: ConversionData,
