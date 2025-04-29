@@ -2067,6 +2067,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/PropertyType.java");
         }
 
+        @TestMetadata("QualifyFieldUsagesOnRename.java")
+        public void testQualifyFieldUsagesOnRename() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/QualifyFieldUsagesOnRename.java");
+        }
+
         @TestMetadata("SetterNonUnitReturnType.java")
         public void testSetterNonUnitReturnType() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/SetterNonUnitReturnType.java");
