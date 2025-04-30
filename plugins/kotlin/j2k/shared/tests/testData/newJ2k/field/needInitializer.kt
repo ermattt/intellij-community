@@ -8,7 +8,7 @@ class Init {
     init {
         val prop1 = "aaa"
 
-        var prop2: String
+        var prop2: String?
         val prop3 = 1
 
         var prop4: Int

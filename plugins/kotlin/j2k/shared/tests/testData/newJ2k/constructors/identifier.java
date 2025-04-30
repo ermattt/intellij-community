@@ -17,7 +17,7 @@ public class Identifier {
     myHasDollar = hasDollar;
     myNullable = isNullable;
   }
-  
+
   public String getName() {
     return myName;
   }

@@ -1,3 +1,4 @@
+// ERROR: Unresolved reference: unresolvedMethod
 class SomeServiceUsage {
     val service: SomeService
         get() = SomeService.getInstanceNotNull()
@@ -11,6 +12,11 @@ class SomeServiceUsage {
             val s = SomeService.getInstanceNullable()
             return s ?: SomeService.getInstanceNotNull()
         }
+
+    fun unresolvedReference(): String {
+        val ss: SomeService = SomeService.unresolvedMethod() ?: return ""
+        return ss.toString()
+    }
 
     // nullable, bang-bang
     fun aString1(): String {

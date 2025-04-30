@@ -13,6 +13,14 @@ public class SomeServiceUsage {
         return s == null ? SomeService.getInstanceNotNull() : s;
     }
 
+    public String unresolvedReference() {
+        SomeService ss = SomeService.unresolvedMethod();
+        if (ss == null) {
+            return "";
+        }
+        return ss.toString();
+    }
+
     // nullable, bang-bang
     public String aString1() {
         return getServiceNullable().nullableString();
