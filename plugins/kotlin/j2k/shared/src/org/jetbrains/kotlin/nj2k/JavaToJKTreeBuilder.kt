@@ -1217,11 +1217,14 @@ class JavaToJKTreeBuilder(
             }
 
     private fun PsiImportStatementBase.toJK(saveImports: Boolean): JKImportStatement? {
+        println("PsiImportStatementBase.toJK called for ${this.text}, importReference?.canonicalText = ${importReference?.canonicalText}")
         val target = when (this) {
             is PsiImportStaticStatement -> resolveTargetClass()
             else -> resolve()
         }
+        println("  target = ${target}")
         val rawName = (importReference?.canonicalText ?: return null) + if (isOnDemand) ".*" else ""
+        println("  rawName = $rawName")
 
         // We will save only unresolved imports and print all static calls with fqNames
         // to avoid name clashes in future
@@ -1241,6 +1244,7 @@ class JavaToJKTreeBuilder(
                 ?: target.safeAs<KtLightClassForDecompiledDeclaration>()?.fqName()?.parent()?.asString()?.let { "$it.*" }
                 ?: rawName
 
+        println("  name = $name")
         return JKImportStatement(JKNameIdentifier(name)).also {
             it.withFormattingFrom(this)
         }
