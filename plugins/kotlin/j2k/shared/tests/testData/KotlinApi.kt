@@ -85,3 +85,5 @@ public open class KotlinClassWithProperties {
 public abstract class KotlinClassAbstractProperty {
     abstract val isVisible: Boolean
 }
+
+const val GLOBAL_CONST: Int = 10

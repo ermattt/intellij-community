@@ -75,7 +75,6 @@ class NewJavaToKotlinConverter(
         val kotlinFiles = results.mapIndexed { i, result ->
             val javaFile = files[i]
             withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
-            println("for file ${javaFile.name}, imports = ${result?.importsToAdd?.joinToString { it.asString() }}")
             runUndoTransparentActionInEdt(inWriteAction = true) {
                 KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
@@ -200,7 +199,7 @@ class NewJavaToKotlinConverter(
                 else -> TOP_LEVEL
             }
 
-            println("\nIn elementsWithAsts.mapIndexed, importsToAdd = ${importsToAdd.joinToString { it.asString() }}")
+            println("\nIn elementsWithAsts.mapIndexed, importsToAdd (size = ${importsToAdd.size}) = [${importsToAdd.joinToString { it.asString() }}]")
 
             ElementResult(code, importsToAdd, parseContext)
         }
@@ -222,8 +221,6 @@ class NewJavaToKotlinConverter(
 
     companion object {
         fun KtFile.addImports(imports: Collection<FqName>) {
-            println("\nIn NewJavaToKotlinConverter's KtFile.addImports, called with arg imports = ${imports.joinToString { it.asString() }}")
-            println("  at start of KtFile.addImports, current file text =\n${this.text.take(500)}\n")
             if (imports.isEmpty()) return
 
             val psiFactory = KtPsiFactory(project)
@@ -232,27 +229,16 @@ class NewJavaToKotlinConverter(
             val importPsi = psiFactory.createImportDirectives(
                 imports.map { ImportPath(it, isAllUnder = false) }
             )
-            println("  importPsi = ${importPsi.joinToString { it.text }}")
             val createdImportList = importPsi.first().parent as KtImportList
-            println("  createdImportList = ${createdImportList.text}\n")
             val importList = importList
-            println("  existing importList = ${importList?.text}")
             if (importList == null) {
                 val newImportList = addImportList(createdImportList)
                 newImportList.ensureLineBreaksAfter(psiFactory)
             } else {
-                println("  importList.firstChild = ${importList.firstChild}")
-                val updatedList = if (importList.firstChild != null) {
-                    createdImportList.addRangeBefore(importList.firstChild, importList.lastChild, createdImportList.firstChild)
-                } else createdImportList
-                println("  updatedList = ${updatedList.text}\n")
-
                 val result = importList.replace(createdImportList)
-                println("  resulting importList = ${result.text}\n")
                 result.ensureLineBreaksAfter(psiFactory)
             }
 
-            println("  at end of KtFile.addImports, file text =\n${this.text.take(500)}\n")
             packageDirective?.ensureLineBreaksAfter(psiFactory)
         }
 

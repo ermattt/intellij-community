@@ -481,8 +481,13 @@ class ResolveElementCache(
 
             is KtImportList -> {
                 val resolver = resolveSession.fileScopeProvider.getImportResolver(resolveElement.getContainingKtFile())
-                resolver.forceResolveNonDefaultImports()
-                resolveSession.trace
+                try {
+                    resolver.forceResolveNonDefaultImports()
+                    resolveSession.trace
+                } catch (e: Exception) {
+                    println("Resolution failed unrecoverably on import list ${resolveElement.text}")
+                    error("Can't recover from this error:\n${e}")
+                }
             }
 
             is KtFileAnnotationList -> {
