@@ -220,22 +220,25 @@ class NewJavaToKotlinConverter(
     }
 
     companion object {
-        fun KtFile.addImports(imports: Collection<FqName>) {
-            if (imports.isEmpty()) return
+        fun KtFile.addImports(importsToAdd: Collection<FqName>) {
+            if (importsToAdd.isEmpty()) return
 
             val psiFactory = KtPsiFactory(project)
 
             @Suppress("DEPRECATION") // unclear how to replace this
-            val importPsi = psiFactory.createImportDirectives(
-                imports.map { ImportPath(it, isAllUnder = false) }
+            val importsToAddPsi = psiFactory.createImportDirectives(
+                importsToAdd.map { ImportPath(it, isAllUnder = false) }
             )
-            val createdImportList = importPsi.first().parent as KtImportList
-            val importList = importList
-            if (importList == null) {
+            val createdImportList = importsToAddPsi.first().parent as KtImportList
+            val existingImportList = importList
+            if (existingImportList == null) {
                 val newImportList = addImportList(createdImportList)
                 newImportList.ensureLineBreaksAfter(psiFactory)
             } else {
-                val result = importList.replace(createdImportList)
+                if (existingImportList.firstChild != null) {
+                    createdImportList.addRangeBefore(existingImportList.firstChild, existingImportList.lastChild, createdImportList.firstChild)
+                }
+                val result = existingImportList.replace(createdImportList)
                 result.ensureLineBreaksAfter(psiFactory)
             }
 
