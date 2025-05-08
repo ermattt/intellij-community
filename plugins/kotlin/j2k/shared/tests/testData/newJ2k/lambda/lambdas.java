@@ -4,6 +4,7 @@ import java.util.*;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
+import org.jetbrains.annotations.Nullable;
 
 public class Java8Class {
     public void foo0(Function0<String> r) {
@@ -123,6 +124,8 @@ public class Java8Class {
             System.out.println("false");
         };
 
+        @Nullable Runnable nullableRunnable = () -> { };
+        
         foo1((Integer i) -> {
             if (i > 1) {
                 return "42";

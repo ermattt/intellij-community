@@ -93,6 +93,8 @@ class Java8Class {
             println("false")
         }
 
+        val nullableRunnable = Runnable {}
+
         foo1 { i: Int ->
             if (i > 1) {
                 return@foo1 "42"

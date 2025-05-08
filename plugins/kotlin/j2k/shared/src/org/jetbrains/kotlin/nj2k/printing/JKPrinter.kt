@@ -161,7 +161,7 @@ class JKPrinter(
             }
         }
         // we print undefined types as nullable because we need smartcast to work in nullability inference in post-processing
-        if (type !is JKWildCardType
+        if (type !is JKWildCardType && owner !is JKLambdaExpression
             && (type.nullability == Nullability.Default
                     && owner?.safeAs<JKLambdaExpression>()?.functionalType?.type != type
                     || type.nullability == Nullability.Nullable)
