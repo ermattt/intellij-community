@@ -149,3 +149,13 @@ public @interface TypeUseAnon2 {
 @Target({ElementType.TYPE_USE, ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 public @interface TypeUseAnon3 {
 }
+
+public class View {
+    public final <T extends View> T findViewById(int id) {
+        if (int < 5) {
+            return null;
+        } else {
+            return View();
+        }
+    }
+}

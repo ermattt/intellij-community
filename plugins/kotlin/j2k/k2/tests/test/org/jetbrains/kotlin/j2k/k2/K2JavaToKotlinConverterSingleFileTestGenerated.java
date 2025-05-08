@@ -5496,6 +5496,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/returnNonNullableArrayElements.java");
         }
 
+        @TestMetadata("SpecialThirdPartyNullability.java")
+        public void testSpecialThirdPartyNullability() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/SpecialThirdPartyNullability.java");
+        }
+
         @TestMetadata("synchronized.java")
         public void testSynchronized() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/synchronized.java");

@@ -38,7 +38,11 @@ import org.jetbrains.kotlin.nj2k.getExplicitLabelComment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.types.isNullable
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.error.ErrorType
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class RemoveRedundantNullabilityProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
@@ -46,19 +50,20 @@ internal class RemoveRedundantNullabilityProcessing : InspectionLikeProcessingFo
         if (!element.isLocal) return false
         val typeReference = element.typeReference
         if (typeReference == null || typeReference.typeElement !is KtNullableType) return false
-        val initializerType = element.initializer?.let {
-            it.analyzeInContext(element.getResolutionScope()).getType(it)
-        }
-        if (initializerType?.isNullable() == true) return false
+        val initializer = element.initializer ?: return false
+        if (!initializer.isNonNullableFromDfa() && initializer.analyzeInContext(element.getResolutionScope()).getType(initializer)?.isResolvedAndNonNullable() != true) return false
 
         return ReferencesSearch.search(element, element.useScope).findAll().mapNotNull { ref ->
             val parent = (ref.element.parent as? KtExpression)?.asAssignment()
             parent?.takeIf { it.left == ref.element }
         }.all {
-            val right = it.right
-            val withoutExpectedType = right?.analyzeInContext(element.getResolutionScope())
-            withoutExpectedType?.getType(right)?.isNullable() == false
+            val right = it.right ?: return@all false
+            right.isNonNullableFromDfa() || right.analyzeInContext(element.getResolutionScope()).getType(right)?.isResolvedAndNonNullable() == true
         }
+    }
+
+    private fun KtExpression.isNonNullableFromDfa(): Boolean {
+        return this is KtBinaryExpression && operationReference.text == "?:" && right is KtReturnExpression
     }
 
     override fun apply(element: KtProperty) {
@@ -104,7 +109,7 @@ internal class RemoveRedundantCastToNullableProcessing :
         val context = element.analyze()
         val leftType = context.getType(element.left) ?: return false
         val rightType = context.get(BindingContext.TYPE, element.right) ?: return false
-        return !leftType.isMarkedNullable && rightType.isMarkedNullable
+        return rightType.isMarkedNullable && leftType.isResolvedAndNonNullable()
     }
 
     override fun apply(element: KtBinaryExpressionWithTypeRHS) {
@@ -287,3 +292,5 @@ internal class DestructureForLoopParameterProcessing : InspectionLikeProcessingF
         DestructureIntention.Holder.applyTo(element)
     }
 }
+
+fun KotlinType.isResolvedAndNonNullable(): Boolean = this.isDefinitelyNotNullType || (this !is ErrorType && this.nullability() == TypeNullability.NOT_NULL)
