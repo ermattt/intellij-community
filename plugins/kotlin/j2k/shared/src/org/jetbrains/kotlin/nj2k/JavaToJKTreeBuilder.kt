@@ -45,10 +45,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.*
 import org.jetbrains.kotlin.nj2k.tree.Mutability.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JavaToJKTreeBuilder(
@@ -373,7 +370,9 @@ class JavaToJKTreeBuilder(
                                     typeArguments
                                 ).qualified(receiver)
                             } else {
-                                origin.fqName?.also { importStorage.addImport(it) }
+                                if (origin.isTopLevel || origin.containingClassOrObject is KtObjectDeclaration) {
+                                    origin.fqName?.also { importStorage.addImport(it) }
+                                }
                                 JKCallExpressionImpl(
                                     symbolProvider.provideDirectSymbol(origin) as JKMethodSymbol,
                                     arguments.toJK(),
@@ -494,11 +493,17 @@ class JavaToJKTreeBuilder(
                 return JKStubExpression()
             }
 
-            if (target is KtLightField
-                && target.name == "INSTANCE"
-                && target.containingClass.kotlinOrigin is KtObjectDeclaration
-            ) {
-                return qualifierExpression?.toJK() ?: JKStubExpression()
+            if (target is KtLightField) {
+                if (target.name == "INSTANCE"
+                    && target.containingClass.kotlinOrigin is KtObjectDeclaration
+                ) {
+                    return qualifierExpression?.toJK() ?: JKStubExpression()
+                }
+                val parent = target.kotlinOrigin?.parent
+                if (target.kotlinOrigin is KtProperty && parent is KtFile) {
+                    val fieldFqn = "${parent.packageFqName.asString()}.${target.name}"
+                    importStorage.addImport(fieldFqn)
+                }
             }
 
             val symbol = symbolProvider.provideSymbolForReference<JKSymbol>(this)

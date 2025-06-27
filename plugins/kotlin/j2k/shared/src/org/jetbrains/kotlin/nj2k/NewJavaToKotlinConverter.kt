@@ -12,11 +12,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.j2k.ParseContext.*
+import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
+import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
@@ -198,6 +199,8 @@ class NewJavaToKotlinConverter(
                 else -> TOP_LEVEL
             }
 
+            println("\nIn elementsWithAsts.mapIndexed, importsToAdd (size = ${importsToAdd.size}) = [${importsToAdd.joinToString { it.asString() }}]")
+
             ElementResult(code, importsToAdd, parseContext)
         }
 
@@ -217,25 +220,25 @@ class NewJavaToKotlinConverter(
     }
 
     companion object {
-        fun KtFile.addImports(imports: Collection<FqName>) {
-            if (imports.isEmpty()) return
+        fun KtFile.addImports(importsToAdd: Collection<FqName>) {
+            if (importsToAdd.isEmpty()) return
 
             val psiFactory = KtPsiFactory(project)
 
             @Suppress("DEPRECATION") // unclear how to replace this
-            val importPsi = psiFactory.createImportDirectives(
-                imports.map { ImportPath(it, isAllUnder = false) }
+            val importsToAddPsi = psiFactory.createImportDirectives(
+                importsToAdd.map { ImportPath(it, isAllUnder = false) }
             )
-            val createdImportList = importPsi.first().parent as KtImportList
-            val importList = importList
-            if (importList == null) {
+            val createdImportList = importsToAddPsi.first().parent as KtImportList
+            val existingImportList = importList
+            if (existingImportList == null) {
                 val newImportList = addImportList(createdImportList)
                 newImportList.ensureLineBreaksAfter(psiFactory)
             } else {
-                val updatedList = if (importList.firstChild != null) {
-                    createdImportList.addRangeBefore(importList.firstChild, importList.lastChild, createdImportList.firstChild)
-                } else createdImportList
-                val result = importList.replace(updatedList)
+                if (existingImportList.firstChild != null) {
+                    createdImportList.addRangeBefore(existingImportList.firstChild, existingImportList.lastChild, createdImportList.firstChild)
+                }
+                val result = existingImportList.replace(createdImportList)
                 result.ensureLineBreaksAfter(psiFactory)
             }
 
