@@ -26,6 +26,9 @@ object ConversionsRunner {
                 continue
             }
 
+            println("ConversionsRunner: [${conversionIndex + 1}/${conversions.size}] Running ${conversion::class.simpleName}")
+            val startTime = System.currentTimeMillis()
+
             val treeSequence = trees.asSequence().onEachIndexed { index, _ ->
                 updateProgress(conversionIndex, conversions.size, index, applyingConversionsMessage)
             }
@@ -34,7 +37,13 @@ object ConversionsRunner {
                 conversion.runForEach(treeSequence, context)
             } catch (ignored: UninitializedPropertyAccessException) {
                 // This should only happen on copy-pasting broken (incomplete) code
+            } catch (e: StackOverflowError) {
+                println("!!! ConversionsRunner: StackOverflowError in ${conversion::class.simpleName} (conversion ${conversionIndex + 1}/${conversions.size})")
+                throw e
             }
+
+            val elapsed = System.currentTimeMillis() - startTime
+            println("ConversionsRunner: [${conversionIndex + 1}/${conversions.size}] ${conversion::class.simpleName} completed in ${elapsed}ms")
         }
     }
 }
