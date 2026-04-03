@@ -37,9 +37,6 @@ object ConversionsRunner {
                 conversion.runForEach(treeSequence, context)
             } catch (ignored: UninitializedPropertyAccessException) {
                 // This should only happen on copy-pasting broken (incomplete) code
-            } catch (e: StackOverflowError) {
-                println("!!! ConversionsRunner: StackOverflowError in ${conversion::class.simpleName} (conversion ${conversionIndex + 1}/${conversions.size})")
-                throw e
             }
 
             val elapsed = System.currentTimeMillis() - startTime

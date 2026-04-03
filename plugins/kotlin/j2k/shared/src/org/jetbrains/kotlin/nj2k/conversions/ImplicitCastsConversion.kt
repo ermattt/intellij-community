@@ -18,140 +18,19 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ImplicitCastsConversion(context: ConverterContext) : RecursiveConversion(context) {
-    private var recursionDepth = 0
-    private val maxDepthSeen = java.util.concurrent.atomic.AtomicInteger(0)
-
-    context(KaSession)
-    override fun run(treeRoot: JKTreeElement, context: ConverterContext) {
-        // Pre-flight: check tree depth and detect cycles before processing
-        println("ImplicitCastsConversion: pre-flight tree check for ${treeRoot::class.simpleName}@${System.identityHashCode(treeRoot)}")
-        val (maxDepth, nodeCount, hasCycle) = checkTreeIntegrity(treeRoot)
-        println("  tree stats: maxDepth=$maxDepth, nodeCount=$nodeCount, hasCycle=$hasCycle")
-        if (hasCycle) {
-            println("  !!! CYCLE DETECTED IN TREE BEFORE ImplicitCastsConversion EVEN STARTED — skipping this tree")
-            return
-        }
-        if (maxDepth > 200) {
-            println("  !!! Tree depth $maxDepth is suspiciously large — may cause StackOverflow")
-        }
-        super.run(treeRoot, context)
-        println("ImplicitCastsConversion: completed. Max applyToElement depth reached: ${maxDepthSeen.get()}")
-        recursionDepth = 0
-        maxDepthSeen.set(0)
-    }
-
-    private data class TreeStats(val maxDepth: Int, val nodeCount: Int, val hasCycle: Boolean)
-
-    private fun checkTreeIntegrity(root: JKTreeElement): TreeStats {
-        val visited = mutableSetOf<Int>()
-        var maxDepth = 0
-        var nodeCount = 0
-        var hasCycle = false
-
-        fun walk(element: JKTreeElement, depth: Int) {
-            if (depth > maxDepth) maxDepth = depth
-            nodeCount++
-            val id = System.identityHashCode(element)
-            if (!visited.add(id)) {
-                hasCycle = true
-                println("  !!! Cycle: revisited ${element::class.simpleName}@$id at depth $depth")
-                return
-            }
-            if (depth > 500 || nodeCount > 100_000) {
-                if (!hasCycle) println("  !!! Aborting tree walk: depth=$depth, nodeCount=$nodeCount")
-                hasCycle = true
-                return
-            }
-            element.children.forEach { child ->
-                when (child) {
-                    is JKTreeElement -> walk(child, depth + 1)
-                    is List<*> -> child.filterIsInstance<JKTreeElement>().forEach { walk(it, depth + 1) }
-                }
-            }
-        }
-
-        walk(root, 0)
-        return TreeStats(maxDepth, nodeCount, hasCycle)
-    }
-
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        recursionDepth++
-        if (recursionDepth > maxDepthSeen.get()) maxDepthSeen.set(recursionDepth)
-
-        if (recursionDepth > 300) {
-            if (recursionDepth == 301) {
-                println("!!! ImplicitCastsConversion: recursion depth exceeded 300, likely cycle detected!")
-                println("  element type: ${element::class.simpleName}")
-                println("  element toString (first 200 chars): ${element.toString().take(200)}")
-                // Walk up the parent chain to find the cycle
-                val parentChain = mutableListOf<String>()
-                var current: org.jetbrains.kotlin.nj2k.tree.JKElement? = element
-                val seen = mutableSetOf<Int>()
-                var cycleDetected = false
-                for (i in 0 until 50) {
-                    if (current == null) break
-                    val id = System.identityHashCode(current)
-                    val label = "${current::class.simpleName}@${id}"
-                    if (!seen.add(id)) {
-                        parentChain.add("$label  ← CYCLE HERE")
-                        cycleDetected = true
-                        break
-                    }
-                    parentChain.add(label)
-                    current = current.parent
-                }
-                println("  parent chain (child → root):")
-                parentChain.forEach { println("    $it") }
-                if (!cycleDetected) println("  (no cycle found in parent chain, issue may be in children)")
-
-                // Print children types of current element
-                println("  children of this element:")
-                try {
-                    element.children.take(20).forEachIndexed { idx, child ->
-                        when (child) {
-                            is org.jetbrains.kotlin.nj2k.tree.JKTreeElement ->
-                                println("    [$idx] ${child::class.simpleName}@${System.identityHashCode(child)}")
-                            is List<*> ->
-                                println("    [$idx] List(size=${child.size}): ${child.filterIsInstance<org.jetbrains.kotlin.nj2k.tree.JKTreeElement>().joinToString { "${it::class.simpleName}@${System.identityHashCode(it)}" }}")
-                            else ->
-                                println("    [$idx] ${child?.let { it::class.simpleName }}")
-                        }
-                    }
-                } catch (e: Exception) {
-                    println("    (error reading children: ${e.message})")
-                }
-            }
-            recursionDepth--
-            return element  // bail out to avoid StackOverflow
+        when (element) {
+            is JKVariable -> convertVariable(element)
+            is JKCallExpression -> convertMethodCallExpression(element)
+            is JKNewExpression -> convertNewExpression(element)
+            is JKBinaryExpression -> return recurse(element.convert())
+            is JKIfElseExpression -> convertIfElseExpression(element)
+            is JKKtAssignmentStatement -> convertAssignmentStatement(element)
+            is JKArrayAccessExpression -> convertArrayAccessExpression(element)
+            is JKReturnStatement -> convertReturnStatement(element)
         }
-
-        val branch = when (element) {
-            is JKVariable -> { convertVariable(element); "JKVariable" }
-            is JKCallExpression -> { convertMethodCallExpression(element); "JKCallExpression" }
-            is JKNewExpression -> { convertNewExpression(element); "JKNewExpression" }
-            is JKBinaryExpression -> {
-                if (recursionDepth <= 5 || recursionDepth % 50 == 0) {
-                    println("ImplicitCastsConversion depth=$recursionDepth: JKBinaryExpression, operator=${element.operator.token}")
-                }
-                val result = recurse(element.convert())
-                recursionDepth--
-                return result
-            }
-            is JKIfElseExpression -> { convertIfElseExpression(element); "JKIfElseExpression" }
-            is JKKtAssignmentStatement -> { convertAssignmentStatement(element); "JKKtAssignmentStatement" }
-            is JKArrayAccessExpression -> { convertArrayAccessExpression(element); "JKArrayAccessExpression" }
-            is JKReturnStatement -> { convertReturnStatement(element); "JKReturnStatement" }
-            else -> null
-        }
-
-        if (recursionDepth <= 5 || recursionDepth % 50 == 0) {
-            println("ImplicitCastsConversion depth=$recursionDepth: ${branch ?: element::class.simpleName}")
-        }
-
-        val result = recurse(element)
-        recursionDepth--
-        return result
+        return recurse(element)
     }
 
     fun JKBinaryExpression.convert(): JKBinaryExpression {
