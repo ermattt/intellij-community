@@ -8,8 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
@@ -24,7 +28,7 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
         }
 
         runUndoTransparentActionInEdt(inWriteAction = true) {
-            ShortenReferencesFacility.getInstance().shorten(file, range)
+            shortenReferencesInRange(file, range, callableShortenStrategy = companionAwareCallableShortenStrategy)
         }
     }
 
@@ -35,7 +39,14 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
         converterContext: ConverterContext
     ): PostProcessingApplier {
         val range = if (rangeMarker != null && rangeMarker.isValid) rangeMarker.textRange else file.textRange
-        val shortenCommand = analyze(file) { collectPossibleReferenceShortenings(file, range) }
+        val shortenCommand = analyze(file) {
+            collectPossibleReferenceShortenings(
+                file, range,
+                ShortenOptions.DEFAULT,
+                ShortenStrategy.defaultClassShortenStrategy,
+                companionAwareCallableShortenStrategy
+            )
+        }
         return Applier(shortenCommand, file.project)
     }
 
@@ -43,6 +54,24 @@ internal class K2ShortenReferenceProcessing : FileBasedPostProcessing() {
         override fun apply() {
             CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
                 shortenCommand.invokeShortening()
+            }
+        }
+    }
+
+    companion object {
+        /**
+         * Don't shorten companion object member calls like `Column.create()` to bare `create()`.
+         * When multiple companion members share the same name (e.g. `create`), removing the class
+         * qualifier makes the code ambiguous and harder to read.
+         */
+        private val companionAwareCallableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = { symbol ->
+            val className = symbol.callableId?.className
+            val isInCompanion = className != null &&
+                className.shortName().asString() == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()
+            if (isInCompanion) {
+                ShortenStrategy.DO_NOT_SHORTEN
+            } else {
+                ShortenStrategy.defaultCallableShortenStrategy(symbol)
             }
         }
     }

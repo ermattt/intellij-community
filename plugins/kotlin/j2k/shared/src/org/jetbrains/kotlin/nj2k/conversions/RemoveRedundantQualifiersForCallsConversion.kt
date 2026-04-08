@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.identifier
+import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -16,8 +17,16 @@ class RemoveRedundantQualifiersForCallsConversion(context: ConverterContext) : R
         if (element !is JKQualifiedExpression) return recurse(element)
         val needRemoveQualifier = when (val receiver = element.receiver.receiverExpression()) {
             is JKClassAccessExpression -> receiver.identifier is JKUniverseClassSymbol
-            is JKFieldAccessExpression, is JKCallExpression, is JKThisExpression -> {
-                element.selector.identifier?.isStaticMember == true
+            is JKFieldAccessExpression, is JKCallExpression -> {
+                val id = element.selector.identifier
+                val isClassQualified =
+                    element.receiver.let { it is JKQualifiedExpression && it.receiver is JKClassAccessExpression }
+                id?.isStaticMember == true && (id as? JKMethodSymbol)?.receiverType == null && !isClassQualified
+            }
+
+            is JKThisExpression -> {
+                val id = element.selector.identifier
+                id?.isStaticMember == true && (id as? JKMethodSymbol)?.receiverType == null
             }
 
             else -> false
