@@ -344,7 +344,7 @@ class JavaToJKTreeBuilder(
             }
             val symbol = target?.let {
                 symbolProvider.provideDirectSymbol(it)
-            } ?: JKUnresolvedMethod(methodExpression, typeFactory)
+            } ?: JKUnresolvedMethod(methodExpression.referenceName ?: methodExpression.canonicalText, typeFactory)
 
             return when {
                 methodExpression.referenceNameElement is PsiKeyword -> {
@@ -356,7 +356,7 @@ class JavaToJKTreeBuilder(
                     val calleeSymbol = when {
                         symbol is JKMethodSymbol -> symbol
                         target is KtLightMethod -> KtClassImplicitConstructorSymbol(target, typeFactory)
-                        else -> JKUnresolvedMethod(methodExpression, typeFactory)
+                        else -> JKUnresolvedMethod(methodExpression.referenceName ?: methodExpression.canonicalText, typeFactory)
                     }
                     JKDelegationConstructorCall(calleeSymbol, callee, arguments.toJK())
                 }

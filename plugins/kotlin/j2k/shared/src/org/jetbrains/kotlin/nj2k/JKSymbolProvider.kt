@@ -56,7 +56,10 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         if (target != null) return provideDirectSymbol(target) as T
         val unresolvedSymbol =
             if (isAssignable<T, JKUnresolvedField>()) JKUnresolvedField(reference.canonicalText, typeFactory)
-            else JKUnresolvedMethod(reference, typeFactory)
+            else JKUnresolvedMethod(
+                (reference as? PsiReferenceExpression)?.referenceName ?: reference.canonicalText,
+                typeFactory
+            )
         return unresolvedSymbol as T
     }
 
