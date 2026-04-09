@@ -47,8 +47,7 @@ val JKSymbol.isStaticMember
     get() = when (val target = target) {
         is PsiModifierListOwner -> target.hasModifier(JvmModifier.STATIC)
         is KtElement -> target.getStrictParentOfType<KtClassOrObject>()
-            ?.safeAs<KtObjectDeclaration>()
-            ?.isCompanion() == true
+            ?.safeAs<KtObjectDeclaration>() != null
 
         is JKTreeElement ->
             target.safeAs<JKOtherModifiersOwner>()?.hasOtherModifier(OtherModifier.STATIC) == true
