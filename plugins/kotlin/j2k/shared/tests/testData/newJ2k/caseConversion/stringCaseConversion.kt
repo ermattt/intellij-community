@@ -7,8 +7,8 @@ internal class A {
         s.uppercase(Locale.getDefault())
         s.uppercase()
         s.uppercase(Locale.FRENCH)
-        s.uppercase()
-        s.uppercase()
+        s.uppercase(Locale.US)
+        s.uppercase(Locale.ENGLISH)
     }
 
     fun toLowerCase() {
@@ -17,7 +17,7 @@ internal class A {
         s.lowercase(Locale.getDefault())
         s.lowercase()
         s.lowercase(Locale.FRENCH)
-        s.lowercase()
-        s.lowercase()
+        s.lowercase(Locale.US)
+        s.lowercase(Locale.ENGLISH)
     }
 }

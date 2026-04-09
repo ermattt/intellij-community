@@ -304,9 +304,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     }
 
     private val neutralLocaleFQNames: List<String> = listOf(
-        "java.util.Locale.ROOT",
-        "java.util.Locale.US",
-        "java.util.Locale.ENGLISH"
+        "java.util.Locale.ROOT"
     )
 
     private val primitiveConversions: List<Conversion> = listOf(
