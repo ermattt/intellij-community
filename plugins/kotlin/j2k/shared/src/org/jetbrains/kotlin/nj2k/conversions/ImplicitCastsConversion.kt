@@ -179,7 +179,12 @@ class ImplicitCastsConversion(context: ConverterContext) : RecursiveConversion(c
 
     context(KaSession)
     private fun convertNewExpression(expression: JKNewExpression) {
-        val constructor = expression.psi.safeAs<PsiNewExpression>()?.resolveConstructor() ?: return
+        val constructor = try {
+            expression.psi.safeAs<PsiNewExpression>()?.resolveConstructor()
+        } catch (e: Exception) {
+            println("ImplicitCastsConversion: skipping unresolvable constructor: ${e::class.simpleName}: ${e.message?.take(120)}")
+            return
+        } ?: return
         val methodSymbol = context.symbolProvider.provideDirectSymbol(constructor) as? JKMethodSymbol ?: return
         convertArguments(methodSymbol, expression.arguments.arguments)
     }
@@ -248,7 +253,14 @@ class ImplicitCastsConversion(context: ConverterContext) : RecursiveConversion(c
 
     context(KaSession)
     private fun JKMethodSymbol.parameterTypesWithLastArgumentUnfoldedAsVararg(): List<JKType>? {
-        val realParameterTypes = parameterTypes ?: return null
+        val realParameterTypes = try {
+            parameterTypes
+        } catch (e: Exception) {
+            // The PSI element backing this symbol may be invalid in the current analysis session
+            // (e.g. KaBaseIllegalPsiException). Skip cast conversion for this call rather than crashing.
+            println("ImplicitCastsConversion: skipping unresolvable method symbol ${this::class.simpleName}: ${e::class.simpleName}: ${e.message?.take(120)}")
+            return null
+        } ?: return null
         if (realParameterTypes.isEmpty()) return null
         val lastArrayType = realParameterTypes.lastOrNull()?.arrayInnerType() ?: return realParameterTypes
         return realParameterTypes.subList(0, realParameterTypes.lastIndex) + lastArrayType

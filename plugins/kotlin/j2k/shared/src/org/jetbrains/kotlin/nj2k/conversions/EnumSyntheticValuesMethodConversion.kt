@@ -47,12 +47,22 @@ class EnumSyntheticValuesMethodConversion(context: ConverterContext) : Recursive
 
     private fun convert(element: JKTreeElement): JKTreeElement {
         val enumClassSymbol = (element.selector().identifier as? JKMultiverseMethodSymbol)?.enumClassSymbol() ?: return element
-        val entriesCall = JKQualifiedExpression(
-            JKClassAccessExpression(enumClassSymbol),
-            JKFieldAccessExpression(
-                symbolProvider.provideFieldSymbol("${enumClassSymbol.fqName}.$ENUM_ENTRIES_PROPERTY_NAME")
-            )
-        ).withFormattingFrom(element)
+        val entriesField = JKFieldAccessExpression(
+            symbolProvider.provideFieldSymbol("${enumClassSymbol.fqName}.$ENUM_ENTRIES_PROPERTY_NAME")
+        )
+
+        // When element is a JKCallExpression that is the selector of a parent JKQualifiedExpression,
+        // the parent already provides the enum class qualifier (e.g. OuterClass.InnerEnum.values()).
+        // Just replace the call with the entries field access to avoid duplicating the qualifier.
+        val parentProvidesQualifier = element is JKCallExpression && element.parent is JKQualifiedExpression
+        val entriesCall = if (parentProvidesQualifier) {
+            entriesField.withFormattingFrom(element)
+        } else {
+            JKQualifiedExpression(
+                JKClassAccessExpression(enumClassSymbol),
+                entriesField
+            ).withFormattingFrom(element)
+        }
 
         if (canChangeReturnTypeFromArrayToList(element)) {
             rebindArraySymbolsToListSymbols(element)

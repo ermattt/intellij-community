@@ -192,7 +192,6 @@ object CommunityRepositoryModules {
       spec.withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
-    androidDesignPlugin(),
     pluginAuto(listOf("intellij.completionMlRankingModels")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },

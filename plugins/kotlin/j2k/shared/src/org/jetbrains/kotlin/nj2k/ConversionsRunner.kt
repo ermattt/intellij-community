@@ -26,6 +26,9 @@ object ConversionsRunner {
                 continue
             }
 
+            println("ConversionsRunner: [${conversionIndex + 1}/${conversions.size}] Running ${conversion::class.simpleName}")
+            val startTime = System.currentTimeMillis()
+
             val treeSequence = trees.asSequence().onEachIndexed { index, _ ->
                 updateProgress(conversionIndex, conversions.size, index, applyingConversionsMessage)
             }
@@ -35,6 +38,9 @@ object ConversionsRunner {
             } catch (ignored: UninitializedPropertyAccessException) {
                 // This should only happen on copy-pasting broken (incomplete) code
             }
+
+            val elapsed = System.currentTimeMillis() - startTime
+            println("ConversionsRunner: [${conversionIndex + 1}/${conversions.size}] ${conversion::class.simpleName} completed in ${elapsed}ms")
         }
     }
 }
