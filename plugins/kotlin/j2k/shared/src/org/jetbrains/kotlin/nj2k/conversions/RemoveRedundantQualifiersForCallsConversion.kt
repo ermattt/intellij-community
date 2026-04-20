@@ -16,7 +16,7 @@ class RemoveRedundantQualifiersForCallsConversion(context: ConverterContext) : R
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
         val needRemoveQualifier = when (val receiver = element.receiver.receiverExpression()) {
-            is JKClassAccessExpression -> receiver.identifier is JKUniverseClassSymbol
+            is JKClassAccessExpression -> false // Don't strip class-qualified calls like Foo.create() — removing the qualifier creates ambiguity
             is JKFieldAccessExpression, is JKCallExpression -> {
                 val id = element.selector.identifier
                 val isClassQualified =

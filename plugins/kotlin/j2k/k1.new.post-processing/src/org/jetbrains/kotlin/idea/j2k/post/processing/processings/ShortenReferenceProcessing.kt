@@ -23,7 +23,8 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
         when (element) {
             is KtQualifiedExpression -> when {
                 resourceRegex.matchesAt(element.text, 0) -> ShortenReferences.FilterResult.SKIP
-                isClassQualifiedCall(element) -> ShortenReferences.FilterResult.SKIP
+                isSimpleClassQualifiedCall(element) -> ShortenReferences.FilterResult.SKIP
+                isFqnClassQualifiedCall(element) -> ShortenReferences.FilterResult.GO_INSIDE
                 JKImportStorage.isImportNeededForCall(element) -> ShortenReferences.FilterResult.PROCESS
                 else -> ShortenReferences.FilterResult.SKIP
             }
@@ -33,15 +34,28 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
     }
 
     /**
-     * Don't shorten calls where the receiver is a class name (e.g. `Column.create()`,
-     * `FDSButtonGroup.createButton()`). Stripping the class qualifier and adding a
-     * direct import makes code ambiguous when multiple classes have members with the
-     * same name.
+     * Don't shorten calls where the receiver is a simple class name (e.g. `Column.create()`).
+     * SKIP prevents the shortener from stripping the class qualifier AND stops recursion.
      */
-    private fun isClassQualifiedCall(expression: KtQualifiedExpression): Boolean {
+    private fun isSimpleClassQualifiedCall(expression: KtQualifiedExpression): Boolean {
         val receiver = expression.receiverExpression
         val resolved = receiver.mainReference?.resolve() ?: return false
         return resolved is PsiClass || resolved is KtClassOrObject
+    }
+
+    /**
+     * Don't shorten FQN calls like `com.facebook.fds.FDSButtonGroup.createButton()` to
+     * bare `createButton()`. GO_INSIDE prevents shortening this expression but still lets
+     * the visitor recurse into the receiver to shorten the package prefix
+     * (e.g. `com.facebook.fds.FDSButtonGroup` → `FDSButtonGroup`).
+     */
+    private fun isFqnClassQualifiedCall(expression: KtQualifiedExpression): Boolean {
+        var current: PsiElement = expression.receiverExpression
+        while (current is KtQualifiedExpression) {
+            current = current.selectorExpression ?: break
+        }
+        val name = current.text
+        return name.isNotEmpty() && name[0].isUpperCase()
     }
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
