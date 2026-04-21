@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.j2k.ConverterContext
@@ -36,11 +37,15 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
     /**
      * Don't shorten calls where the receiver is a simple class name (e.g. `Column.create()`).
      * SKIP prevents the shortener from stripping the class qualifier AND stops recursion.
+     * Exception: self-references (receiver is the containing class) ARE shortened.
      */
     private fun isSimpleClassQualifiedCall(expression: KtQualifiedExpression): Boolean {
         val receiver = expression.receiverExpression
         val resolved = receiver.mainReference?.resolve() ?: return false
-        return resolved is PsiClass || resolved is KtClassOrObject
+        if (resolved !is PsiClass && resolved !is KtClassOrObject) return false
+        // Allow shortening self-references like MyClass.myMethod() inside MyClass
+        val containingClass = PsiTreeUtil.getParentOfType(expression, KtClassOrObject::class.java, PsiClass::class.java)
+        return resolved != containingClass
     }
 
     /**
@@ -48,6 +53,8 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
      * bare `createButton()`. GO_INSIDE prevents shortening this expression but still lets
      * the visitor recurse into the receiver to shorten the package prefix
      * (e.g. `com.facebook.fds.FDSButtonGroup` → `FDSButtonGroup`).
+     * Exception: self-references (FQN receiver ends with the containing class name) are
+     * allowed to be fully shortened.
      */
     private fun isFqnClassQualifiedCall(expression: KtQualifiedExpression): Boolean {
         var current: PsiElement = expression.receiverExpression
@@ -55,7 +62,11 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
             current = current.selectorExpression ?: break
         }
         val name = current.text
-        return name.isNotEmpty() && name[0].isUpperCase()
+        if (name.isEmpty() || !name[0].isUpperCase()) return false
+        // Allow shortening self-references
+        val containingClass = PsiTreeUtil.getParentOfType(expression, KtClassOrObject::class.java, PsiClass::class.java)
+        if (containingClass != null && name == containingClass.name) return false
+        return true
     }
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
