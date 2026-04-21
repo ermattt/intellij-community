@@ -373,7 +373,12 @@ class JavaToJKTreeBuilder(
                                     typeArguments
                                 ).qualified(receiver)
                             } else {
-                                origin.fqName?.also { importStorage.addImport(it) }
+                                // Only add an import for top-level functions and object/companion members.
+                                // Instance methods on classes (e.g. Builder.build()) don't need imports.
+                                val parentClass = origin.getStrictParentOfType<KtClassOrObject>()
+                                if (parentClass == null || parentClass is KtObjectDeclaration) {
+                                    origin.fqName?.also { importStorage.addImport(it) }
+                                }
                                 JKCallExpressionImpl(
                                     symbolProvider.provideDirectSymbol(origin) as JKMethodSymbol,
                                     arguments.toJK(),
@@ -383,7 +388,10 @@ class JavaToJKTreeBuilder(
                         }
 
                         is KtProperty, is KtPropertyAccessor, is KtParameter -> {
-                            origin.kotlinFqName?.also { importStorage.addImport(it) }
+                            val parentClass = origin.getStrictParentOfType<KtClassOrObject>()
+                            if (parentClass == null || parentClass is KtObjectDeclaration) {
+                                origin.kotlinFqName?.also { importStorage.addImport(it) }
+                            }
                             val property =
                                 if (origin is KtPropertyAccessor) origin.parent as KtProperty
                                 else origin as KtNamedDeclaration
