@@ -48,6 +48,7 @@ fun getNewJ2KConversions(context: ConverterContext): List<Conversion> = listOf(
     TypeMappingConversion(context),
     InternalDeclarationConversion(context),
     InnerClassConversion(context),
+    InheritedStaticMemberQualifierConversion(context),
     StaticsToCompanionExtractConversion(context),
     InterfaceWithFieldConversion(context),
     ClassToObjectPromotionConversion(context),
