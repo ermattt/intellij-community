@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.symbols.*
+import org.jetbrains.kotlin.nj2k.tree.JKElement
 import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -56,6 +57,10 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
             symbol.isStaticMember && symbol.containingClass?.isUnnamedCompanion == true -> {
                 val containingClass = symbol.containingClass ?: return fqName
                 val classContainingCompanion = containingClass.containingClass ?: return fqName
+                // A companion member is accessible by simple name from anywhere lexically inside the class that owns the
+                // companion (its methods, its companion, and its nested/inner classes), so don't emit a redundant
+                // `Companion.`/`Outer.Companion.` qualifier there. Only qualify references from outside that scope.
+                if (isReferencedFromInside(classContainingCompanion, owner)) return name
                 if (!canBeShortenedClassNameCache.canBeShortened(classContainingCompanion)) return fqName
                 importStorage.addImport(classContainingCompanion.getDisplayFqName())
                 "${classContainingCompanion.name.escaped()}.${SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT}.$name"
@@ -70,6 +75,14 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
 
             else -> fqName
         }
+    }
+
+    // True when [owner] (the reference site) is lexically nested within the converted class identified by
+    // [owningClassSymbol] — i.e. that class node is one of its ancestors. Only in-file (universe) classes have a
+    // tree node to compare against; references to external classes are treated as outside.
+    private fun isReferencedFromInside(owningClassSymbol: JKClassSymbol, owner: JKTreeElement?): Boolean {
+        val owningClassNode = (owningClassSymbol as? JKUniverseClassSymbol)?.target ?: return false
+        return generateSequence(owner as JKElement?) { it.parent }.any { it === owningClassNode }
     }
 
     companion object {
