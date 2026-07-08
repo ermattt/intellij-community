@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.symbols.*
@@ -63,7 +62,9 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
                 if (isReferencedFromInside(classContainingCompanion, owner)) return name
                 if (!canBeShortenedClassNameCache.canBeShortened(classContainingCompanion)) return fqName
                 importStorage.addImport(classContainingCompanion.getDisplayFqName())
-                "${classContainingCompanion.name.escaped()}.${SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT}.$name"
+                // From outside the owning class, a companion member is reachable via the class name alone
+                // (`Outer.member`); the explicit `.Companion.` qualifier is redundant.
+                "${classContainingCompanion.name.escaped()}.$name"
             }
 
             symbol.isEnumConstant || symbol.isStaticMember -> {
