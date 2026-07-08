@@ -6664,6 +6664,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/thisExpression/classAdotThisFoo.java");
         }
 
+        @TestMetadata("setterInlinedIntoAnonymousClass.java")
+        public void testSetterInlinedIntoAnonymousClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/thisExpression/setterInlinedIntoAnonymousClass.java");
+        }
+
         @TestMetadata("thisStatement.java")
         public void testThisStatement() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/thisExpression/thisStatement.java");
