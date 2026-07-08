@@ -8,13 +8,37 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.identifier
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
+import org.jetbrains.kotlin.nj2k.symbols.containingClass
 import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
+import org.jetbrains.kotlin.nj2k.symbols.isUnnamedCompanion
 import org.jetbrains.kotlin.nj2k.tree.*
 
 class RemoveRedundantQualifiersForCallsConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKQualifiedExpression) return recurse(element)
+
+        // Strip a redundant companion qualifier so a companion member is reached through its containing
+        // class name alone (`X.member`), not through the companion object. This keeps the class qualifier
+        // (still verbose) — it is a cleanup, not a shortening to a bare name. Two tree shapes occur:
+        //   (a) receiver is `X.Companion` — a qualified expression whose selector is the companion class-access
+        //   (b) receiver is a single class-access to the companion object itself (renders as `X.Companion`)
+        if (element.selector.identifier?.isStaticMember == true) {
+            val companionReceiver = element.receiver
+            if (companionReceiver is JKQualifiedExpression &&
+                (companionReceiver.selector as? JKClassAccessExpression)?.identifier?.isUnnamedCompanion == true
+            ) {
+                element.receiver = companionReceiver::receiver.detached()
+                return recurse(element)
+            }
+            if (companionReceiver is JKClassAccessExpression && companionReceiver.identifier.isUnnamedCompanion) {
+                companionReceiver.identifier.containingClass?.let { containingClass ->
+                    companionReceiver.identifier = containingClass
+                    return recurse(element)
+                }
+            }
+        }
+
         val needRemoveQualifier = when (val receiver = element.receiver.receiverExpression()) {
             is JKClassAccessExpression -> false // Don't strip class-qualified calls like Foo.create() — removing the qualifier creates ambiguity
             is JKFieldAccessExpression, is JKCallExpression -> {
