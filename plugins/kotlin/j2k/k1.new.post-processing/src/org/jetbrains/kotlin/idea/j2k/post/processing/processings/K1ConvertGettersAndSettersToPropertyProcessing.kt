@@ -763,7 +763,15 @@ private class ClassConverter(
                         psiFactory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}")
                     )
                 } else {
-                    callExpression.replace(psiFactory.createExpression("this.$propertyName = ${newValue.text}"))
+                    // The original call was unqualified. When it is inside a nested/anonymous class,
+                    // a hardcoded `this.` would rebind to that inner class instead of the property's
+                    // owner (breaking resolution), so emit the assignment unqualified — it resolves
+                    // through the implicit enclosing receiver. Within the property's own class keep the
+                    // explicit `this.` to preserve disambiguation from a shadowing local.
+                    val ownerClass = ktProperty.getStrictParentOfType<KtClassOrObject>()
+                    val callSiteClass = callExpression.getStrictParentOfType<KtClassOrObject>()
+                    val receiverPrefix = if (callSiteClass != null && callSiteClass != ownerClass) "" else "this."
+                    callExpression.replace(psiFactory.createExpression("$receiverPrefix$propertyName = ${newValue.text}"))
                 }
             }
         } else {
