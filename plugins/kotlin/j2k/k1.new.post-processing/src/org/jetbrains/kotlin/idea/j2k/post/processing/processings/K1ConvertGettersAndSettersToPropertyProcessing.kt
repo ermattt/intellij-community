@@ -247,7 +247,6 @@ private class PropertiesDataCollector(private val resolutionFacade: ResolutionFa
 
     private fun KtNamedFunction.isAnnotatedWithSynchronized(): Boolean {
         return annotationEntries.any { annotationEntry ->
-            println("annotationEntry.name = ${annotationEntry.shortName}")
             annotationEntry.shortName?.identifier == "Synchronized" }
     }
 
@@ -311,7 +310,6 @@ private class PropertiesDataFilter(
         variableNameToDescriptor: Map<String, VariableDescriptor>
     ): PropertyWithAccessors? {
         val (realProperty, realGetter, realSetter, type) = propertyData
-        println("PropertiesDataFilter::getPropertyWithAccessors called for realProperty $realProperty, realGetter $realGetter, realSetter $realSetter")
 
         fun renderType(): String? = type.takeUnless { it.isError }?.let { IdeDescriptorRenderers.SOURCE_CODE.renderType(it) }
             ?: realGetter?.function?.typeReference?.text
@@ -331,8 +329,6 @@ private class PropertiesDataFilter(
 
         fun propertyIsAccessedBypassingNonPureAccessors(): Boolean {
             if (realProperty == null) return false
-            println("propertyIsAccessedBypassingNonPureAccessors called for realProperty $realProperty")
-            println("  getter annotations = ${realGetter?.function?.annotationEntries?.joinToString{ it.text }}")
             if ((realGetter == null || realGetter.isPure) && (realSetter == null || realSetter.isPure)) return false
 
             if (!realProperty.property.isPrivate()) return true
@@ -555,7 +551,6 @@ private class ClassConverter(
 
     private fun convert(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
-        println("ClassConverter::convert called for prop $property, getter $getter, setter $setter")
 
         // convenience variables
         val realGetter = getter as? RealGetter
@@ -672,7 +667,8 @@ private class ClassConverter(
                     qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
                 } else {
                     val selectorText = getSelectorText(containingClass, usage)
-                    callExpression.replace(psiFactory.createExpression("${selectorText}.${getter.name}"))
+                    val prefix = if (selectorText.isEmpty()) "" else "$selectorText."
+                    callExpression.replace(psiFactory.createExpression("$prefix${getter.name}"))
                 }
             }
         }
@@ -827,16 +823,41 @@ private class ClassConverter(
                     && element.mainReference.resolve() == this
                     && isAncestor(element)
             if (isBackingField) continue
+            val parent = element.parent
+            // The receiver of a qualified expression (e.g. `mField.bar(x)`) normally keeps its bare
+            // form, but if the new name would be shadowed by a same-named parameter or local in scope
+            // it needs an explicit receiver to keep resolving to the property (and not, say, a method
+            // parameter). Non-shadowed references stay bare so we don't over-qualify (e.g. inserting a
+            // spurious `Companion.` in front of companion-object members).
+            val receiverNeedsQualifier = parent is KtQualifiedExpression
+                    && parent.receiverExpression == element
+                    && isNameShadowedAtUsage(element, newName)
             val replacer =
-                if (element.parent is KtQualifiedExpression) {
+                if (parent is KtQualifiedExpression && !receiverNeedsQualifier) {
                     psiFactory.createExpression(newName)
                 } else {
                     val selectorText = getSelectorText(propertyContainingClass, element)
-                    psiFactory.createExpression("${selectorText}.$newName")
+                    val prefix = if (selectorText.isEmpty()) "" else "$selectorText."
+                    psiFactory.createExpression("$prefix$newName")
                 }
             element.replace(replacer)
         }
         setName(newName)
+    }
+
+    // True if [name] would be captured by a value parameter or local variable in scope at [element],
+    // meaning a bare reference to the renamed property would resolve to the wrong symbol.
+    private fun isNameShadowedAtUsage(element: PsiElement, name: String): Boolean {
+        var current: PsiElement? = element.parent
+        while (current != null && current !is KtClassOrObject) {
+            when (current) {
+                is KtFunction -> if (current.valueParameters.any { it.name == name }) return true
+                is KtForExpression -> if (current.loopParameter?.name == name) return true
+                is KtBlockExpression -> if (current.statements.any { it is KtProperty && it.name == name }) return true
+            }
+            current = current.parent
+        }
+        return false
     }
 
     private fun getSelectorText(declarationClass: KtClassOrObject?, usage: PsiElement): String {
@@ -844,6 +865,13 @@ private class ClassConverter(
         val usageClass = usage.getStrictParentOfType<KtClassOrObject>()
         if (declarationClass == null || usageClass == null) {
             return fixme
+        }
+        // A companion object's members are accessible by simple name from within the companion's owning
+        // class (its methods, nested classes, and the companion itself). An unqualified usage can only
+        // occur in that scope, so no receiver is needed — and an explicit `this` would wrongly refer to
+        // the owner *instance* rather than the companion. Emit a bare reference.
+        if ((declarationClass as? KtObjectDeclaration)?.isCompanion() == true) {
+            return ""
         }
         // If the definition class isn't an ancestor node of the usage, then we're probably referring to a member defined in a superclass
         return if (declarationClass == usageClass || !declarationClass.anyDescendantOfType<KtClassOrObject> { it == usageClass }) {
