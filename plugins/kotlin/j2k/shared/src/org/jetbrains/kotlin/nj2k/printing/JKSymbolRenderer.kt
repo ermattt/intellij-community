@@ -69,6 +69,10 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
 
             symbol.isEnumConstant || symbol.isStaticMember -> {
                 val containingClass = symbol.containingClass ?: return fqName
+                // Members of an object/enum (and other statics) are accessible by simple name from anywhere lexically
+                // inside the owning declaration, so don't qualify such in-scope references (e.g. `Outer.o` -> `o`,
+                // an enum entry `TestEnum.A` -> `A` referenced from within `TestEnum`).
+                if (isReferencedFromInside(containingClass, owner)) return name
                 if (!canBeShortenedClassNameCache.canBeShortened(containingClass)) return fqName
                 importStorage.addImport(containingClass.getDisplayFqName())
                 "${containingClass.name.escaped()}.$name"
