@@ -172,6 +172,7 @@ class JKSymbolProvider(private val resolver: JKResolver) {
         is PsiField -> JKMultiverseFieldSymbol(psi, typeFactory)
         is KtFunction -> JKMultiverseFunctionSymbol(psi, typeFactory)
         is KtProperty -> JKMultiversePropertySymbol(psi, typeFactory)
+        is KtPropertyAccessor -> JKMultiversePropertySymbol(psi.property, typeFactory)
         is KtParameter -> JKMultiversePropertySymbol(psi, typeFactory)
         is PsiParameter -> JKMultiverseFieldSymbol(psi, typeFactory)
         is PsiLocalVariable -> JKMultiverseFieldSymbol(psi, typeFactory)

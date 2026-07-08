@@ -2032,6 +2032,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/kt-32253.java");
         }
 
+        @TestMetadata("MergedPropertyReceiverShadowedByParam.java")
+        public void testMergedPropertyReceiverShadowedByParam() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/MergedPropertyReceiverShadowedByParam.java");
+        }
+
         @TestMetadata("NoBackingField.java")
         public void testNoBackingField() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/NoBackingField.java");
@@ -4274,6 +4279,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/kotlinApiAccess/Property2.java");
         }
 
+        @TestMetadata("PropertyWithCustomAccessor.java")
+        public void testPropertyWithCustomAccessor() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/kotlinApiAccess/PropertyWithCustomAccessor.java");
+        }
+
         @TestMetadata("StaticImportAllFromFileFacade.java")
         public void testStaticImportAllFromFileFacade() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/kotlinApiAccess/StaticImportAllFromFileFacade.java");
@@ -5761,6 +5771,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("ConflictParameterName.java")
         public void testConflictParameterName() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/overloads/ConflictParameterName.java");
+        }
+
+        @TestMetadata("ConflictParameterNameNestedCall.java")
+        public void testConflictParameterNameNestedCall() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/overloads/ConflictParameterNameNestedCall.java");
         }
 
         @TestMetadata("Override.java")
