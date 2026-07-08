@@ -51,10 +51,13 @@ class EnumSyntheticValuesMethodConversion(context: ConverterContext) : Recursive
             symbolProvider.provideFieldSymbol("${enumClassSymbol.fqName}.$ENUM_ENTRIES_PROPERTY_NAME")
         )
 
-        // When element is a JKCallExpression that is the selector of a parent JKQualifiedExpression,
+        // When element is a JKCallExpression that is the *selector* of a parent JKQualifiedExpression,
         // the parent already provides the enum class qualifier (e.g. OuterClass.InnerEnum.values()).
         // Just replace the call with the entries field access to avoid duplicating the qualifier.
-        val parentProvidesQualifier = element is JKCallExpression && element.parent is JKQualifiedExpression
+        // Note: element being the *receiver* of a chained call (e.g. `values()[i]` lowered to
+        // `values().get(i)`) does NOT provide a qualifier, so the enum class must still be prepended.
+        val parentProvidesQualifier =
+            element is JKCallExpression && (element.parent as? JKQualifiedExpression)?.selector == element
         val entriesCall = if (parentProvidesQualifier) {
             entriesField.withFormattingFrom(element)
         } else {
