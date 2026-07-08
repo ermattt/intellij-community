@@ -5763,6 +5763,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/overloads/ConflictParameterName.java");
         }
 
+        @TestMetadata("ConflictParameterNameNestedCall.java")
+        public void testConflictParameterNameNestedCall() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/overloads/ConflictParameterNameNestedCall.java");
+        }
+
         @TestMetadata("Override.java")
         public void testOverride() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/overloads/Override.java");

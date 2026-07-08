@@ -76,7 +76,10 @@ class DefaultArgumentsConversion(context: ConverterContext) : RecursiveConversio
                 }
 
                 on is JKCallExpression && on.identifier.needsExplicitThisReceiver() -> {
-                    val selector = applyRecursive(on, ::remapParameterSymbol)
+                    // Use a detached copy as the selector: `on` may still be attached to its parent
+                    // (applyRecursive returns it unchanged), and wrapping an already-attached node in a
+                    // new JKQualifiedExpression would violate the single-parent tree invariant.
+                    val selector = applyRecursive(on.copyTreeAndDetach(), ::remapParameterSymbol)
                     return JKQualifiedExpression(JKThisExpression(JKLabelEmpty(), JKNoType), selector)
                 }
             }
